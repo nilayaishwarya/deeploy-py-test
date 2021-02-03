@@ -2,36 +2,32 @@ from typing import Optional, List, Any
 
 from pydantic import BaseModel
 
+from .git_service import GitService, GitServiceOptions
+from .models import Repository, ClientOptions
+
 class Client(object):
   """ 
   A class for interacting with Deeploy
   """
 
-  class ClientOptions(BaseModel):
-    """
-    Class containing the Deeploy client options
-
-    Attributes:
-      access_key: string representing the personal access key
-      secret_key: string representing the personal secret key
-      host: string representing the domain on which Deeploy is hosted
-      workspace_id: string representing the workspace id in which to create
-        deployments
-      local_repository_path: string representing the relative or absolute path
-        to the local git repository
-      branch_name: string representing the branch name on which to commit. Defaults
-        to the local active branch
-    """
-    access_key: str
-    secret_key: str
-    host: str
-    workspace_id: str
-    local_repository_path: str
-    branch_name: Optional[str]
-
   def __init__(self, options: ClientOptions) -> None:
     """Initialise the Deeploy client
     """
+    if not self.__are_clientoptions_valid(options):
+      raise 'Client options not valid'
+
+    self.__config = options
+    git_options: GitClientOptions = {
+      "local_repository_path": self.__config.local_repository_path,
+    }
+    self.__git_client = GitClient(git_options)
+    self.__deeploy_client = 
+
+    if not self.__is_git_repository_in_workspace():
+      raise 'Repository \'%s\' was not found in the Deeploy workspace'
+
+    if not self.__user_has_deploy_permissions_in_workspace():
+      raise 'User does not have deploy permissions in the workspace'
     return
 
   class DeployOptions(BaseModel):
@@ -74,3 +70,21 @@ class Client(object):
       The class instance of an optional model explainer
     """
     return
+
+  def __are_clientoptions_valid(self, options: ClientOptions) -> bool:
+    """Check if the supplied options are valid
+    """
+    # TODO: 
+    # verify access keys
+    # verify workspace existence
+    # verify workspace permissions (deploy model)
+    # verify repository is contained in workspace
+    return False
+
+  def __is_git_repository_in_workspace(self) -> bool:
+    remote_url = self.__git_client.get_remote_url()
+    workspace_id = self.__config.workspace_id
+    return False
+
+  def __user_has_deploy_permissions_in_workspace(self) -> bool:
+    return False
