@@ -1,3 +1,8 @@
+from typing import Optional, List, Any
+
+from pydantic import BaseModel
+
+
 class ClientOptions(BaseModel):
     """
     Class containing the Deeploy client options

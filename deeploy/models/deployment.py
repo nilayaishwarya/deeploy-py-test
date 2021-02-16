@@ -1,12 +1,16 @@
+from typing import Optional, List, Any
+
 from pydantic import BaseModel
 
+
 class Deployment(BaseModel):
-  id: str
+    id: str
+
 
 class DeployOptions(BaseModel):
     """
     Class that contains the options for deploying a model
-    
+
     Attributes:
       name: name of the deployment
       model_serverless: boolean indicating whether to deploy the model in 
