@@ -2,9 +2,36 @@ from typing import Optional, List, Any
 
 from pydantic import BaseModel
 
+from deeploy.common import to_lower_camel
+from deeploy.enums import ModelType, ExplainerType, PredictionMethod
+
 
 class Deployment(BaseModel):
+    commit_id: str
+    name: str
+    workspace_id: str
+    description: Optional[str]
+    example_input: Optional[List[Any]]
+    example_output: Optional[List[Any]]
+    model_type: ModelType
+    model_class_name: Optional[str]
+    method: PredictionMethod
+    model_serverless: bool
+    explainer_type: ExplainerType
+    explainer_serverless: bool
+    status: int
+    is_archived: bool
+    s3_link: str
+    owner_id: str
+    repository_id: str
+    kf_serving_id: str
+    public_url: str
     id: str
+    created_at: str
+    updated_at: str
+
+    class Config:
+        alias_generator = to_lower_camel
 
 
 class DeployOptions(BaseModel):

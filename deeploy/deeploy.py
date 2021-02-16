@@ -1,10 +1,11 @@
 import logging
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Callable
 
 from pydantic import BaseModel
 
 from .services import DeeployService, GitService, GitServiceOptions
-from .models import Repository, ClientOptions
+from .models import Repository, ClientOptions, Deployment
+from .enums import PredictionMethod
 
 
 class Client(object):
@@ -15,9 +16,6 @@ class Client(object):
     def __init__(self, options: ClientOptions) -> None:
         """Initialise the Deeploy client
         """
-        if not self.__are_clientoptions_valid(options):
-            raise Exception('Client options not valid')
-
         self.__config = options
         git_options: GitServiceOptions = {
             "local_repository_path": self.__config.local_repository_path,
@@ -29,13 +27,13 @@ class Client(object):
             options.host
         )
 
+        if not self.__are_clientoptions_valid(options):
+            raise Exception('Client options not valid')
+
         if not self.__is_git_repository_in_workspace():
             raise Exception(
                 'Repository \'%s\' was not found in the Deeploy workspace')
 
-        if not self.__user_has_deploy_permissions_in_workspace():
-            raise Exception(
-                'User does not have deploy permissions in the workspace')
         return
 
     class DeployOptions(BaseModel):
@@ -59,40 +57,52 @@ class Client(object):
         name: str
         model_serverless = False
         explainer_serverless = False
-        method = 'predict'
+        method = PredictionMethod.PREDICT
         description: Optional[str]
         example_input: Optional[List[Any]]
         example_output: Optional[List[Any]]
         model_class_name: Optional[str]
 
-    def deploy(self, model_class: Any, options: DeployOptions, explainer_class: Any = None) -> None:
+    def deploy(self, model: Any, options: DeployOptions, explainer: Any = None) -> Deployment:
         """Deploy a model on Deeploy
 
         Parameters
         ----------
-        model_class: Any
+        model: Any
           The class instance of an ML model. Supports 
         options: DeployOptions
           The deploy options class containing the deployment options
-        explainer_class: Any, optional
+        explainer: Any, optional
           The class instance of an optional model explainer
         """
+        # TODO
+        # verify model & explainer objects
+        # empty the model & explainer folder
+        # save model & explainer to file system
+        # add files to staging area
+        # create commit
+        # push commit
+        # create deployment
         return
 
     def __are_clientoptions_valid(self, options: ClientOptions) -> bool:
         """Check if the supplied options are valid
         """
-        # TODO:
-        # verify access keys
-        # verify workspace existence
-        # verify workspace permissions (deploy model)
-        # verify repository is contained in workspace
-        return False
+        try:
+            self.__deeploy_service.get_workspace(options.workspace_id)
+        except Exception as e:
+            raise e
+
+        return True
 
     def __is_git_repository_in_workspace(self) -> bool:
         remote_url = self.__git_service.get_remote_url()
         workspace_id = self.__config.workspace_id
-        return False
 
-    def __user_has_deploy_permissions_in_workspace(self) -> bool:
+        repositories = self.__deeploy_service.get_repositories(workspace_id)
+        remote_urls = list(map(lambda x: x.git_ssh_pull_link, repositories))
+
+        if remote_url in remote_urls:
+            return True
+
         return False

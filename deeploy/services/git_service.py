@@ -1,22 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
 from git import Repo, Remote
-
-
-class GitServiceOptions(BaseModel):
-    """
-    Class containing the Git client options
-
-    Attributes:
-      local_repository_path: str
-        the relative or absolute path to the local git repository
-      branch_name: str
-        the branch name on which to commit. Defaults to the local 
-        active branch
-    """
-    local_repository_path: str
-    branch_name: Optional[str]
 
 
 class GitService(object):
@@ -27,10 +11,11 @@ class GitService(object):
     repository: Repo
     remote: Remote
 
-    def __init__(self, options: GitServiceOptions) -> None:
+    def __init__(self, local_repository_path: str, branch_name: str = None) -> None:
         """Initialise the Git client
         """
-        self.repository = Repo(options.branch_name)
+        # TODO: branch name
+        self.repository = Repo(local_repository_path)
         self.remote = self.repository.remote('origin')
 
         if not self.__is_valid_git_project():

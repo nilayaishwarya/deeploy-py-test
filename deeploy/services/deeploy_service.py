@@ -3,8 +3,9 @@ import logging
 from typing import Optional, List, Any
 
 import requests
+from pydantic import parse_obj_as
 
-from deeploy.models import Deployment, Repository, CreateDeployment
+from deeploy.models import Deployment, Repository, Commit, CreateDeployment, Workspace
 from deeploy.enums import ModelType, ExplainerType, PredictionMethod
 
 
@@ -37,12 +38,32 @@ class DeeployService(object):
 
     def get_repositories(self, workspace_id: str) -> List[Repository]:
 
-        url = '%s/v2/workspaces/%s/repositories?isArchived=false' % (
+        url = '%s/v2/workspaces/%s/repositories' % (
             self.__host, workspace_id)
+        params = {
+            'isArchived': False,
+        }
+
         repositories_response = requests.get(
-            url, auth=(self.__access_key, self.__secret_key))
-        repositories = repositories_response.json()
+            url, params=params, auth=(self.__access_key, self.__secret_key))
+
+        repositories = parse_obj_as(
+            List[Repository], repositories_response.json())
+
         return repositories
+
+    def get_repository(self, workspace_id: str, repository_id: str) -> Repository:
+        url = '%s/v2/workspaces/%s/repositories/%s' % (
+            self.__host, workspace_id, repository_id)
+
+        repository_response = requests.get(
+            url, auth=(self.__access_key, self.__secret_key))
+        if not self.__request_is_successful(repository_response):
+            raise Exception('Repository does not exist in the workspace.')
+
+        repository = parse_obj_as(Repository, repository_response.json())
+
+        return repository
 
     def create_deployment(self, workspace_id: str, deployment: CreateDeployment) -> Deployment:
         url = '%s/v2/workspaces/%s/deployments' % (self.__host, workspace_id)
@@ -50,9 +71,22 @@ class DeeployService(object):
 
         deployment_response = requests.post(
             url, json=data, auth=(self.__access_key, self.__secret_key))
-        if self.__request_is_successful(deployment_response):
-            logging.info('Deployment created successfully.')
-        else:
+        if not self.__request_is_successful(deployment_response):
             raise Exception('Failed to create the deployment.')
-        print(deployment_response.json())
-        return
+
+        deployment = parse_obj_as(
+            Deployment, deployment_response.json())
+
+        return deployment
+
+    def get_workspace(self, workspace_id: str) -> Workspace:
+        url = '%s/v2/workspaces/%s' % (self.__host, workspace_id)
+
+        workspace_response = requests.get(
+            url, auth=(self.__access_key, self.__secret_key))
+        if not self.__request_is_successful(workspace_response):
+            raise Exception('Workspace does not exist.')
+
+        workspace = parse_obj_as(Workspace, workspace_response.json())
+
+        return workspace
