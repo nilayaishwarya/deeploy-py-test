@@ -2,7 +2,7 @@ from typing import Any, List
 import inspect
 
 from deeploy.enums import ModelType
-from deeploy.services.ml_models import BaseModel
+from deeploy.services.models import BaseModel
 
 
 class ModelWrapper:

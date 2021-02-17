@@ -3,7 +3,7 @@ from typing import Optional, List, Any, Callable
 
 from pydantic import BaseModel
 
-from .services import DeeployService, GitService, GitServiceOptions
+from .services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from .models import Repository, ClientOptions, Deployment
 from .enums import PredictionMethod
 
@@ -17,10 +17,8 @@ class Client(object):
         """Initialise the Deeploy client
         """
         self.__config = options
-        git_options: GitServiceOptions = {
-            "local_repository_path": self.__config.local_repository_path,
-        }
-        self.__git_service = GitService(git_options)
+
+        self.__git_service = GitService(self.__config.local_repository_path)
         self.__deeploy_service = DeeployService(
             options.access_key,
             options.secret_key,
@@ -63,7 +61,8 @@ class Client(object):
         example_output: Optional[List[Any]]
         model_class_name: Optional[str]
 
-    def deploy(self, model: Any, options: DeployOptions, explainer: Any = None) -> Deployment:
+    def deploy(self, model: Any, options: DeployOptions, explainer: Any = None, overwrite: bool = False,
+               commit_message: str = None) -> Deployment:
         """Deploy a model on Deeploy
 
         Parameters
@@ -75,8 +74,15 @@ class Client(object):
         explainer: Any, optional
           The class instance of an optional model explainer
         """
+
         # TODO
-        # verify model & explainer objects
+        # check if folders are empty or not empty & overwrite
+
+        model_wrapper = ModelWrapper(model)
+        if explainer:
+            explainer_wrapper = ExplainerWrapper(explainer)
+
+        # TODO
         # empty the model & explainer folder
         # save model & explainer to file system
         # add files to staging area

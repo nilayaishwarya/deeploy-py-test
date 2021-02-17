@@ -10,7 +10,7 @@ class Workspace(BaseModel):
     name: str
     description: str
     owner_id: str
-    created_at: str,
+    created_at: str
     updated_at: str
 
     class Config:
