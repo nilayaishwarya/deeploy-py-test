@@ -18,6 +18,9 @@ class ExplainerWrapper:
         self.__explainer_helper.save(local_folder_path)
         return
 
+    def get_explainer_type(self) -> ExplainerType:
+        return self.__explainer_helper.get_explainer_type()
+
     def __get_explainer_type(self, model_object: Any) -> ExplainerType:
 
         base_classes = list(map(lambda x: x.__module__ + '.' +
@@ -43,10 +46,10 @@ class ExplainerWrapper:
         if explainer_type == ExplainerType.ANCHOR_TEXT or \
                 explainer_type == ExplainerType.ANCHOR_IMAGES or \
                 explainer_type == ExplainerType.ANCHOR_TABULAR:
-            from deeploy.services.explainers import AlibiExplainer
+            from deeploy.services.explainers.alibi import AlibiExplainer
             return AlibiExplainer(explainer_object)
         if explainer_type == ExplainerType.SHAP_KERNEL:
-            from deeploy.services.explainers import SHAPExplainer
+            from deeploy.services.explainers.shap import SHAPExplainer
             return SHAPExplainer(explainer_object)
 
     def __is_alibi_anchor_text(self, base_classes: List[str]) -> bool:

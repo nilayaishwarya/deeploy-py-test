@@ -5,6 +5,7 @@ from torch.nn import Module
 from torch import save
 
 from . import BaseModel
+from deeploy.enums import ModelType
 
 
 class PyTorchModel(BaseModel):
@@ -23,3 +24,6 @@ class PyTorchModel(BaseModel):
         save(self.__pytorch_model.state_dict(),
              join(local_folder_path, 'model.pt'))
         return
+
+    def get_model_type(self) -> ModelType:
+        return ModelType.PYTORCH

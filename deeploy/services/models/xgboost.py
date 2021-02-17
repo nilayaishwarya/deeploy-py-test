@@ -5,6 +5,7 @@ from xgboost import XGBClassifier
 from joblib import dump
 
 from . import BaseModel
+from deeploy.enums import ModelType
 
 
 class XGBoostModel(BaseModel):
@@ -22,3 +23,6 @@ class XGBoostModel(BaseModel):
     def save(self, local_folder_path: str) -> None:
         self.__xgboost_model.save_model(join(local_folder_path, 'model.bst'))
         return
+
+    def get_model_type(self) -> ModelType:
+        return ModelType.XGBOOST

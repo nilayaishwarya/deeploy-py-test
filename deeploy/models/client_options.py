@@ -3,7 +3,7 @@ from typing import Optional, List, Any
 from pydantic import BaseModel
 
 
-class ClientOptions(BaseModel):
+class ClientConfig(BaseModel):
     """
     Class containing the Deeploy client options
 
@@ -23,4 +23,5 @@ class ClientOptions(BaseModel):
     host: str
     workspace_id: str
     local_repository_path: str
+    repository_id: str
     branch_name: Optional[str]

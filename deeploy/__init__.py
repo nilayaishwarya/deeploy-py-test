@@ -1,5 +1,3 @@
-from .services import DeeployService
+from .deeploy import Client
 
-from .models import ClientOptions, CreateDeployment
-
-from .enums import ModelType, ExplainerType, PredictionMethod
+from .models import CreateDeployment, DeployOptions

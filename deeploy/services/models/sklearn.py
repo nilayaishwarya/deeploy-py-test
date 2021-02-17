@@ -5,6 +5,7 @@ from sklearn.base import BaseEstimator
 from joblib import dump
 
 from . import BaseModel
+from deeploy.enums import ModelType
 
 
 class SKLearnModel(BaseModel):
@@ -22,3 +23,6 @@ class SKLearnModel(BaseModel):
     def save(self, local_folder_path: str) -> None:
         dump(self.__sklearn_model, join(local_folder_path, 'model.joblib'))
         return
+
+    def get_model_type(self) -> ModelType:
+        return ModelType.SKLEARN

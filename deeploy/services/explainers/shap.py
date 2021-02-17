@@ -5,6 +5,7 @@ import dill
 from shap.explainers.explainer import Explainer
 
 from . import BaseExplainer
+from deeploy.enums import ExplainerType
 
 
 class SHAPExplainer(BaseExplainer):
@@ -23,3 +24,6 @@ class SHAPExplainer(BaseExplainer):
         with open(join(local_folder_path, 'explainer.dill'), 'wb') as f:
             dill.dump(self.__shap_explainer, f)
         return
+
+    def get_explainer_type(self) -> ExplainerType:
+        return ExplainerType.SHAP_KERNEL

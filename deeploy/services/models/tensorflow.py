@@ -3,6 +3,7 @@ from typing import Any
 from tensorflow.keras import Model
 
 from . import BaseModel
+from deeploy.enums import ModelType
 
 
 class TensorFlowModel(BaseModel):
@@ -20,3 +21,6 @@ class TensorFlowModel(BaseModel):
     def save(self, local_folder_path: str) -> None:
         self.__tensorflow_model.save(local_folder_path)
         return
+
+    def get_model_type(self) -> ModelType:
+        return ModelType.TENSORFLOW

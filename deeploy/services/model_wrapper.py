@@ -19,6 +19,9 @@ class ModelWrapper:
         self.__model_helper.save(local_folder_path)
         return
 
+    def get_model_type(self) -> ModelType:
+        return self.__model_helper.get_model_type()
+
     def __get_model_type(self, model_object: Any) -> ModelType:
 
         base_classes = list(map(lambda x: x.__module__ + '.' +
@@ -46,22 +49,22 @@ class ModelWrapper:
 
         # only import the helper class when it is needed
         if model_type == ModelType.SKLEARN:
-            from deeploy.services.models import SKLearnModel
+            from deeploy.services.models.sklearn import SKLearnModel
             return SKLearnModel(model_object)
         if model_type == ModelType.XGBOOST:
-            from deeploy.services.models import XGBoostModel
+            from deeploy.services.models.xgboost import XGBoostModel
             return XGBoostModel(model_object)
         if model_type == ModelType.PYTORCH:
-            from deeploy.services.models import PyTorchModel
+            from deeploy.services.models.pytorch import PyTorchModel
             return PyTorchModel(model_object)
         if model_type == ModelType.TENSORFLOW:
-            from deeploy.services.models import TensorFlowModel
+            from deeploy.services.models.tensorflow import TensorFlowModel
             return TensorFlowModel(model_object)
         if model_type == ModelType.TRITON:
-            from deeploy.services.models import TritonModel
+            from deeploy.services.models.triton import TritonModel
             return TritonModel(model_object)
         if model_type == ModelType.ONNX:
-            from deeploy.services.models import ONNXModel
+            from deeploy.services.models.onnx import ONNXModel
             return ONNXModel(model_object)
 
     def __is_sklearn(self, base_classes: List[str]) -> bool:

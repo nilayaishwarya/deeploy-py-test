@@ -1,10 +1,12 @@
 from typing import Any
 from os.path import join
+import inspect
 
 import dill
 from alibi.api.interfaces import Explainer
 
 from . import BaseExplainer
+from deeploy.enums import ExplainerType
 
 
 class AlibiExplainer(BaseExplainer):
@@ -23,3 +25,14 @@ class AlibiExplainer(BaseExplainer):
         with open(join(local_folder_path, 'explainer.dill'), 'wb') as f:
             dill.dump(self.__alibi_explainer, f)
         return
+
+    def get_explainer_type(self) -> ExplainerType:
+        base_classes = list(map(lambda x: x.__module__ + '.' +
+                                x.__name__, inspect.getmro(type(self.__alibi_explainer))))
+                                
+        if 'alibi.explainers.anchor_text.AnchorText' in base_classes:
+            return ExplainerType.ANCHOR_TEXT
+        if 'alibi.explainers.anchor_image.AnchorImage' in base_classes:
+            return ExplainerType.ANCHOR_IMAGES
+        if 'alibi.explainers.anchor_tabular.AnchorTabular' in base_classes:
+            return ExplainerType.ANCHOR_TABULAR

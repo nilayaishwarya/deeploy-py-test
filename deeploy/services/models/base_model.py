@@ -1,5 +1,6 @@
 from typing import Any
 
+from deeploy.enums import ModelType
 
 class BaseModel:
 
@@ -7,4 +8,7 @@ class BaseModel:
         return
 
     def save(self, local_folder_path: str) -> None:
+        return
+
+    def get_model_type(self) -> ModelType:
         return

@@ -45,7 +45,7 @@ class GitService(object):
         self.repository.index.add([relative_folder_path])
         return
 
-    def commit(self, commit_message: str) -> None:
+    def commit(self, commit_message: str) -> str:
         """Create a new commit on the current branch
 
         Parameters
@@ -54,7 +54,7 @@ class GitService(object):
             representing the commit message
         """
         self.repository.index.commit(commit_message)
-        return
+        return self.repository.head.commit.hexsha
 
     def pull(self) -> None:
         """Pull from the default remote repository
@@ -70,3 +70,6 @@ class GitService(object):
 
     def get_remote_url(self) -> str:
         return self.remote.url
+
+    def get_current_branch_name(self) -> str:
+        return self.repository.active_branch.name

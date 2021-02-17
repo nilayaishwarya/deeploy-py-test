@@ -75,7 +75,7 @@ class DeeployService(object):
             raise Exception('Failed to create the deployment.')
 
         deployment = parse_obj_as(
-            Deployment, deployment_response.json())
+            Deployment, deployment_response.json()['data'])
 
         return deployment
 
