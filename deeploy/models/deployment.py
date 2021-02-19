@@ -17,8 +17,8 @@ class Deployment(BaseModel):
     model_class_name: Optional[str]
     method: PredictionMethod
     model_serverless: bool
-    explainer_type: ExplainerType
-    explainer_serverless: bool
+    explainer_type: Optional[ExplainerType]
+    explainer_serverless: Optional[bool]
     status: int
     is_archived: bool
     s3_link: str

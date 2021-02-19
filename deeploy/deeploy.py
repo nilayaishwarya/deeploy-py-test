@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from .services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from .models import Repository, ClientConfig, Deployment, CreateDeployment, DeployOptions
-from .enums import PredictionMethod
+from .enums import PredictionMethod, ExplainerType
 from .common import delete_all_contents_in_directory, directory_exists, directory_empty
 
 
@@ -80,7 +80,7 @@ class Client(object):
         model_folder = os.path.join(
             self.__config.local_repository_path, 'model')
         model_wrapper.save(model_folder)
-        self.__git_service.addFolderToStaging('model')
+        self.__git_service.add_folder_to_staging('model')
         commit_message = ':sparkles: Add new model'
 
         if explainer:
@@ -90,8 +90,11 @@ class Client(object):
             explainer_folder = os.path.join(
                 self.__config.local_repository_path, 'explainer')
             explainer_wrapper.save(explainer_folder)
-            self.__git_service.addFolderToStaging('explainer')
+            self.__git_service.add_folder_to_staging('explainer')
             commit_message += ' and explainer'
+            explainer_type = explainer_wrapper.get_explainer_type()
+        else:
+            explainer_type = ExplainerType.NO_EXPLAINER
 
         logging.info('Committing and pushing the result to the remote.')
         commit_sha = self.__git_service.commit(commit_message)
@@ -110,11 +113,9 @@ class Client(object):
             'model_serverless': options.model_serverless,
             'branch_name': self.__git_service.get_current_branch_name(),
             'commit_sha': commit_sha,
+            'explainer_type': explainer_type.value,
+            'explainer_serverless': options.explainer_serverless
         }
-        if explainer:
-            deployment_options['explainer_type'] = explainer_wrapper.get_explainer_type(
-            ).value
-            deployment_options['explainer_serverless']: options.explainer_serverless
 
         deployment = self.__deeploy_service.create_deployment(
             self.__config.workspace_id, CreateDeployment(**deployment_options))
@@ -161,24 +162,24 @@ class Client(object):
             delete_all_contents_in_directory(model_folder_path)
         else:  # folder exists and empty
             pass
+        self.__git_service.delete_folder_from_staging('model')
         return
 
     def __prepare_explainer_directory(self, overwrite=False) -> None:
         explainer_folder_path = os.path.join(
             self.__config.local_repository_path, 'explainer')
         if not directory_exists(explainer_folder_path):
-            # TODO create folder
             try:
                 os.mkdir(explainer_folder_path)
             except OSError:
                 logging.error("Creation of the directory %s failed" %
                               explainer_folder_path)
         elif not directory_empty(explainer_folder_path):
-            # TODO empty folder if overwrite
             if not overwrite:
                 raise Exception(
                     'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' % explainer_folder_path)
             delete_all_contents_in_directory(explainer_folder_path)
         else:  # folder exists and empty
             pass
+        self.__git_service.delete_folder_from_staging('explainer')
         return

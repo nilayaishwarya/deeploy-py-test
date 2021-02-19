@@ -1,7 +1,7 @@
 from typing import Any
 from os.path import join
 
-from xgboost import XGBClassifier
+from xgboost import XGBClassifier, Booster
 from joblib import dump
 
 from . import BaseModel
@@ -14,7 +14,8 @@ class XGBoostModel(BaseModel):
 
     def __init__(self, model_object: Any) -> None:
 
-        if not issubclass(type(model_object), XGBClassifier):
+        if not issubclass(type(model_object), XGBClassifier) and \
+            not issubclass(type(model_object), Booster):
             raise Exception('Not a valid XGBoost class')
 
         self.__xgboost_model = model_object

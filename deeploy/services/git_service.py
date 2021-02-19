@@ -33,7 +33,7 @@ class GitService(object):
 
         return True
 
-    def addFolderToStaging(self, relative_folder_path: str) -> None:
+    def add_folder_to_staging(self, relative_folder_path: str) -> None:
         """Add the folder and all its contents to the git staging area
 
         Parameters
@@ -43,6 +43,10 @@ class GitService(object):
             the git directory
         """
         self.repository.index.add([relative_folder_path])
+        return
+
+    def delete_folder_from_staging(self, relative_folder_path: str) -> None:
+        self.repository.index.remove([relative_folder_path], False, r=True)
         return
 
     def commit(self, commit_message: str) -> str:

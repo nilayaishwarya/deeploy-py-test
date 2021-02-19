@@ -71,13 +71,13 @@ class ModelWrapper:
         return 'sklearn.base.BaseEstimator' in base_classes and not 'xgboost.sklearn.XGBModel' in base_classes
 
     def __is_xgboost(self, base_classes: List[str]) -> bool:
-        return 'xgboost.sklearn.XGBModel' in base_classes
+        return 'xgboost.sklearn.XGBModel' in base_classes or 'xgboost.core.Booster' in base_classes
 
     def __is_pytorch(self, base_classes: List[str]) -> bool:
         return 'torch.nn.modules.module.Module' in base_classes
 
     def __is_tensorflow(self, base_classes: List[str]) -> bool:
-        return 'tensorflow.keras.Model' in base_classes
+        return 'tensorflow.python.module.module.Module' in base_classes
 
     def __is_onnx(self, model: Any) -> bool:
         # TODO
