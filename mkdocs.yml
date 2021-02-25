@@ -1,0 +1,15 @@
+site_name: Deeploy Python Client
+theme:
+  name: material
+  language: en
+  favicon: img/favicon.ico
+  logo: img/favicon.ico
+extra_css:
+  - stylesheets/extra.css
+markdown_extensions:
+  - codehilite
+  - toc:
+      permalink: true
+      toc_depth: 3
+nav:
+  - Overview: index.md

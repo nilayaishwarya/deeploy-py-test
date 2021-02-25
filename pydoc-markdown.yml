@@ -1,0 +1,33 @@
+loaders:
+  - type: python
+processors:
+  - type: filter
+  - type: smart
+  - type: crossref
+renderer:
+  type: mkdocs
+  pages:
+    - title: Home
+      name: index
+      source: README.md
+    - title: API Documentation
+      contents:
+        - '*'
+  mkdocs_config:
+    mkdocs_config:
+      site_name: Deeploy Python Client
+      theme:
+        name: material
+        language: en
+        favicon: img/favicon.ico
+        logo: img/favicon.ico
+      extra_css:
+        - stylesheets/extra.css
+      markdown_extensions:
+        - codehilite
+        - toc:
+            permalink: true
+            toc_depth: 3
+      nav:
+        - Overview: index.md
+
