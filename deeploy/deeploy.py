@@ -75,7 +75,7 @@ class Client(object):
         logging.info('Successfully pulled from the remote repository.')
 
         logging.info('Saving the model to disk...')
-        model_wrapper = ModelWrapper(model)
+        model_wrapper = ModelWrapper(model, pytorch_model_file_path=options.pytorch_model_file_path)
         self.__prepare_model_directory(overwrite)
         model_folder = os.path.join(
             self.__config.local_repository_path, 'model')
@@ -160,9 +160,9 @@ class Client(object):
                 raise Exception(
                     'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' % model_folder_path)
             delete_all_contents_in_directory(model_folder_path)
+            self.__git_service.delete_folder_from_staging('model')
         else:  # folder exists and empty
             pass
-        self.__git_service.delete_folder_from_staging('model')
         return
 
     def __prepare_explainer_directory(self, overwrite=False) -> None:

@@ -12,7 +12,7 @@ class XGBoostModel(BaseModel):
 
     __xgboost_model: XGBClassifier
 
-    def __init__(self, model_object: Any) -> None:
+    def __init__(self, model_object: Any, **kwargs) -> None:
 
         if not issubclass(type(model_object), XGBClassifier) and \
             not issubclass(type(model_object), Booster):

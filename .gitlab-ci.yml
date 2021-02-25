@@ -1,0 +1,17 @@
+image: docker:19.03.5-dind
+services:
+  - docker:19.03.5-dind
+
+stages:
+  - build_release
+
+build_ng:
+  image:
+    name: python:3.9-slim
+  stage: build_release
+  script:
+    - pip3 install twine
+    - python3 setup.py sdist bdist_wheel
+    - python3 -m twine upload dist/*
+  only:
+    - tags

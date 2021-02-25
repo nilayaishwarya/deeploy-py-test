@@ -31,3 +31,4 @@ class DeployOptions(BaseModel):
     example_input: Optional[List[Any]]
     example_output: Optional[List[Any]]
     model_class_name: Optional[str]
+    pytorch_model_file_path: Optional[str]

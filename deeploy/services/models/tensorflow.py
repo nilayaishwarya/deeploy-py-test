@@ -11,7 +11,7 @@ class TensorFlowModel(BaseModel):
 
     __tensorflow_model: Module
 
-    def __init__(self, model_object: Any) -> None:
+    def __init__(self, model_object: Any, **kwargs) -> None:
 
         if not issubclass(type(model_object), Module):
             raise Exception('Not a valid TensorFlow class')

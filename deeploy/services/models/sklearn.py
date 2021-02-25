@@ -12,7 +12,7 @@ class SKLearnModel(BaseModel):
 
     __sklearn_model: BaseEstimator
 
-    def __init__(self, model_object: Any) -> None:
+    def __init__(self, model_object: Any, **kwargs) -> None:
 
         if not issubclass(type(model_object), BaseEstimator):
             raise Exception('Not a valid SKLearn class')

@@ -9,9 +9,9 @@ class ModelWrapper:
 
     __model_helper: BaseModel
 
-    def __init__(self, model_object: Any) -> None:
+    def __init__(self, model_object: Any, **kwargs) -> None:
 
-        self.__model_helper = self.__get_model_helper(model_object)
+        self.__model_helper = self.__get_model_helper(model_object, **kwargs)
 
         return
 
@@ -43,29 +43,29 @@ class ModelWrapper:
         raise NotImplementedError(
             'This model type is not implemented by Deeploy')
 
-    def __get_model_helper(self, model_object) -> BaseModel:
+    def __get_model_helper(self, model_object, **kwargs) -> BaseModel:
 
         model_type = self.__get_model_type(model_object)
 
         # only import the helper class when it is needed
         if model_type == ModelType.SKLEARN:
             from deeploy.services.models.sklearn import SKLearnModel
-            return SKLearnModel(model_object)
+            return SKLearnModel(model_object, **kwargs)
         if model_type == ModelType.XGBOOST:
             from deeploy.services.models.xgboost import XGBoostModel
-            return XGBoostModel(model_object)
+            return XGBoostModel(model_object, **kwargs)
         if model_type == ModelType.PYTORCH:
             from deeploy.services.models.pytorch import PyTorchModel
-            return PyTorchModel(model_object)
+            return PyTorchModel(model_object, **kwargs)
         if model_type == ModelType.TENSORFLOW:
             from deeploy.services.models.tensorflow import TensorFlowModel
-            return TensorFlowModel(model_object)
+            return TensorFlowModel(model_object, **kwargs)
         if model_type == ModelType.TRITON:
             from deeploy.services.models.triton import TritonModel
-            return TritonModel(model_object)
+            return TritonModel(model_object, **kwargs)
         if model_type == ModelType.ONNX:
             from deeploy.services.models.onnx import ONNXModel
-            return ONNXModel(model_object)
+            return ONNXModel(model_object, **kwargs)
 
     def __is_sklearn(self, base_classes: List[str]) -> bool:
         return 'sklearn.base.BaseEstimator' in base_classes and not 'xgboost.sklearn.XGBModel' in base_classes
