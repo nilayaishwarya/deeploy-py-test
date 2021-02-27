@@ -179,7 +179,7 @@ class Client(object):
                 raise Exception(
                     'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' % explainer_folder_path)
             delete_all_contents_in_directory(explainer_folder_path)
+            self.__git_service.delete_folder_from_staging('explainer')
         else:  # folder exists and empty
             pass
-        self.__git_service.delete_folder_from_staging('explainer')
         return
