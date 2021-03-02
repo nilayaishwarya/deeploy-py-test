@@ -12,4 +12,4 @@ markdown_extensions:
       permalink: true
       toc_depth: 3
 nav:
-  - Overview: index.md
+  - API Reference: index.md

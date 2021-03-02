@@ -20,6 +20,16 @@ class Client(object):
     def __init__(self, access_key: str, secret_key: str, host: str, workspace_id: str,
                  local_repository_path: str, branch_name: str = None) -> None:
         """Initialise the Deeploy client
+        Parameters:
+            access_key (str): Personal Access Key generated from the Deeploy UI
+            secret_key (str): Secret Access Key generated from the Deeploy UI
+            host (str): The host at which Deeploy is located, i.e. deeploy.example.com
+            workspace_id (str): The ID of the workspace in which your repository 
+                is located
+            local_repository_path (str): Absolute path to the local git repository 
+                which is connected to Deeploy
+            branch_name (str, optional): The banchname on which to commit new models. 
+                Defaults to the current branchname.
         """
         self.__config = ClientConfig(**{
             'access_key': access_key,
@@ -55,20 +65,14 @@ class Client(object):
     def deploy(self, model: Any, options: DeployOptions, explainer: Any = None, overwrite: bool = False,
                commit_message: str = None) -> Deployment:
         """Deploy a model on Deeploy
-
-        Parameters
-        ----------
-        model: Any
-            The class instance of an ML model. Supports 
-        options: DeployOptions
-            The deploy options class containing the deployment options
-        explainer: Any, optional
-            The class instance of an optional model explainer
-        overwrite: boolean, optional
-            Whether or not to overwrite files that are in the 'model' and 'explainer' 
-            folders in the git folder. Defaults to False
-        commit_message: str, optional
-            Commit message to use
+        Parameters:
+            model (Any): The class instance of an ML model
+            options (DeployOptions): An instance of the deploy options class 
+                containing the deployment options
+            explainer (Any, optional): The class instance of an optional model explainer
+            overwrite (bool, optional): Whether or not to overwrite files that are in the 'model' and 'explainer' 
+                folders in the git folder. Defaults to False
+            commit_message (str, optional): Commit message to use
         """
         logging.info('Pulling from the remote repository...')
         self.__git_service.pull()

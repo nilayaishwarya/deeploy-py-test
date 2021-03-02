@@ -7,13 +7,13 @@ Python client for interacting with Deeploy.
 ### Generate
 
 ```bash
-pydoc-markdown -I deeploy -m deeploy --render-toc > ./docs/index.md
+pydoc-markdown --render-toc
 ```
 
 ### Serve
 
 ```bash
-mkdocs serve
+cd docs && mkdocs serve
 ```
 
 # Resources

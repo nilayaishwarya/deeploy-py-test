@@ -1,33 +1,49 @@
 loaders:
   - type: python
+    search_path: [.]
+    modules:
+      - deeploy
+      - deeploy.deeploy
+      - deeploy.models.deploy_options
+      - deeploy.enums.prediction_method
 processors:
   - type: filter
+    exclude_private: true
+    documented_only: false
   - type: smart
+  - type: google
   - type: crossref
 renderer:
   type: mkdocs
+  content_directory: .
+  build_directory: docs
   pages:
-    - title: Home
-      name: index
-      source: README.md
-    - title: API Documentation
+    - title: API Reference
       contents:
-        - '*'
+        - 'deeploy.deeploy.*'
+        - 'deeploy.models.deploy_options.*'
+        - 'deeploy.enums.prediction_method.*'
   mkdocs_config:
-    mkdocs_config:
-      site_name: Deeploy Python Client
-      theme:
-        name: material
-        language: en
-        favicon: img/favicon.ico
-        logo: img/favicon.ico
-      extra_css:
-        - stylesheets/extra.css
-      markdown_extensions:
-        - codehilite
-        - toc:
-            permalink: true
-            toc_depth: 3
-      nav:
-        - Overview: index.md
-
+    site_name: Deeploy Python Client
+    theme:
+      name: material
+      language: en
+      favicon: img/favicon.ico
+      logo: img/favicon.ico
+    extra_css:
+      - stylesheets/extra.css
+    markdown_extensions:
+      - codehilite
+      - toc:
+          permalink: true
+          toc_depth: 3
+    nav:
+      - API Reference: content/api-reference.md
+hooks:
+  # pre-render:
+  # - ...
+  post-render:
+  - rm -f docs/content/*.md
+  - cp -R build/docs/content/. docs/content/
+  - cp build/docs/mkdocs.yml docs/
+  - cp index.md docs/content/
