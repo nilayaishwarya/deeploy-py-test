@@ -21,6 +21,7 @@ build_python:
   stage: build
   script:
     - python3 setup.py sdist bdist_wheel
+  needs: []
   artifacts:
     paths:
       - dist
@@ -33,6 +34,7 @@ build_docs:
   script:
     - pydoc-markdown --render-toc -v
     - mkdocs build -f docs/mkdocs.yml
+  needs: []
   artifacts:
     paths:
       - docs/site
