@@ -7,3 +7,4 @@ data/
 deeploy.egg-info/
 dist/
 docs/site/
+.pytest_cache/

@@ -46,4 +46,4 @@ hooks:
   - rm -f docs/content/*.md
   - cp -R build/docs/content/. docs/content/
   - cp build/docs/mkdocs.yml docs/
-  - cp index.md docs/content/
+  - cp docs/index.md docs/content/
