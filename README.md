@@ -6,15 +6,17 @@ Python client for interacting with Deeploy.
 
 ### Generate
 
-```bash
-pydoc-markdown --render-toc
-```
+1. Generate the markdown from python code
 
-### Serve
+    ```bash
+    pydoc-markdown --render-toc -v
+    ```
 
-```bash
-cd docs && mkdocs serve
-```
+2. Generate the HTML from markdown
+
+    ```bash
+    mkdocs build -f docs/mkdocs.yml
+    ```
 
 # Resources
 

@@ -7,6 +7,7 @@ markdown_extensions:
     permalink: true
     toc_depth: 3
 nav:
+- Getting started: index.md
 - API Reference: api-reference.md
 site_name: Deeploy Python Client
 theme:

@@ -27,18 +27,18 @@ build_python:
       - dist
     expire_in: 1 day
 
-build_docs:
-  image:
-    name: registry.gitlab.com/deeploy-ml/deeploy-python-client/build-docs:0.1
-  stage: build
-  script:
-    - pydoc-markdown --render-toc -v
-    - mkdocs build -f docs/mkdocs.yml
-  needs: []
-  artifacts:
-    paths:
-      - docs/site
-    expire_in: 1 day
+# build_docs:
+#   image:
+#     name: registry.gitlab.com/deeploy-ml/deeploy-python-client/build-docs:0.1
+#   stage: build
+#   script:
+#     - pydoc-markdown --render-toc -v
+#     - mkdocs build -f docs/mkdocs.yml
+#   needs: []
+#   artifacts:
+#     paths:
+#       - docs/site
+#     expire_in: 1 day
 
 release_pypi:
   image:
@@ -54,18 +54,18 @@ release_pypi:
   only:
     - tags
 
-release_docs:
-  stage: release
-  variables:
-    IMAGE_NAME: '$CI_REGISTRY_IMAGE/docs'
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker build -f ./docs/Dockerfile -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
-    - docker push $IMAGE_NAME
-  dependencies:
-    - build_docs
-  needs:
-    - build_docs
-  only:
-    - tags
+# release_docs:
+#   stage: release
+#   variables:
+#     IMAGE_NAME: '$CI_REGISTRY_IMAGE/docs'
+#   before_script:
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#   script:
+#     - docker build -f ./docs/Dockerfile -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+#     - docker push $IMAGE_NAME
+#   dependencies:
+#     - build_docs
+#   needs:
+#     - build_docs
+#   only:
+#     - tags

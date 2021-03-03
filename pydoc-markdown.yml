@@ -18,12 +18,16 @@ renderer:
   content_directory: .
   build_directory: docs
   pages:
+    - title: Getting started
+      name: index
+      source: docs/markdown/index.md
     - title: API Reference
       contents:
         - 'deeploy.deeploy.*'
         - 'deeploy.models.deploy_options.*'
         - 'deeploy.enums.prediction_method.*'
   mkdocs_config:
+    docs_dir: content
     site_name: Deeploy Python Client
     theme:
       name: material
@@ -37,8 +41,6 @@ renderer:
       - toc:
           permalink: true
           toc_depth: 3
-    nav:
-      - API Reference: content/api-reference.md
 hooks:
   # pre-render:
   # - ...
@@ -46,4 +48,4 @@ hooks:
   - rm -f docs/content/*.md
   - cp -R build/docs/content/. docs/content/
   - cp build/docs/mkdocs.yml docs/
-  - cp docs/index.md docs/content/
+  # - cp docs/markdown/*.md docs/content
