@@ -6,3 +6,4 @@ build/
 data/
 deeploy.egg-info/
 dist/
+docs/site/

@@ -5,4 +5,3 @@ joblib==1.0.1
 dill==0.3.3
 ipython==7.20.0
 nbconvert==6.0.7
-mkdocs-material==5.5.12

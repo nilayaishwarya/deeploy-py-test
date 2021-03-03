@@ -3,15 +3,67 @@ services:
   - docker:19.03.5-dind
 
 stages:
-  - build_release
+  - test
+  - build
+  - release
 
-build_ng:
+test_python:
+  image:
+    name: registry.gitlab.com/deeploy-ml/deeploy-python-client/test-python:0.1
+  stage: test
+  script:
+    - pip3 install -e deeploy
+    - python3 -m pytest deeploy
+
+build_python:
   image:
     name: python:3.9-slim
-  stage: build_release
+  stage: build
   script:
-    - pip3 install twine
     - python3 setup.py sdist bdist_wheel
+  artifacts:
+    paths:
+      - dist
+    expire_in: 1 day
+
+build_docs:
+  image:
+    name: registry.gitlab.com/deeploy-ml/deeploy-python-client/build-docs:0.1
+  stage: release
+  script:
+    - pydoc-markdown --render-toc -v
+    - mkdocs build -f docs/mkdocs.yml
+  artifacts:
+    paths:
+      - docs/site
+    expire_in: 1 day
+
+release_pypi:
+  image:
+    name: registry.gitlab.com/deeploy-ml/deeploy-python-client/release-pypi:0.1
+  stage: release
+  script:
     - python3 -m twine upload dist/*
+  dependencies:
+    - build_python
+  needs:
+    - build_python
+    - test_python
+  only:
+    - tags
+
+release_docs:
+  stage: release
+  variables:
+    IMAGE_NAME: '$CI_REGISTRY_IMAGE/docs'
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -f ./docs/Dockerfile -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker push $IMAGE_NAME
+  dependencies:
+    - build_docs
+  needs:
+    - build_docs
   only:
     - tags
