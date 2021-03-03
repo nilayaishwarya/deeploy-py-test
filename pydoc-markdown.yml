@@ -18,9 +18,11 @@ renderer:
   content_directory: .
   build_directory: docs
   pages:
-    - title: Getting started
+    - title: " "
       name: index
       source: docs/markdown/index.md
+    - title: Getting started
+      source: docs/markdown/getting-started.md
     - title: API Reference
       contents:
         - 'deeploy.deeploy.*'
@@ -34,6 +36,7 @@ renderer:
       language: en
       favicon: img/favicon.ico
       logo: img/favicon.ico
+      navigation_depth: 3
     extra_css:
       - stylesheets/extra.css
     markdown_extensions:
