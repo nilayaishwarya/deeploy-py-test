@@ -12,8 +12,8 @@ test_python:
     name: registry.gitlab.com/deeploy-ml/deeploy-python-client/test-python:0.1
   stage: test
   script:
-    - pip3 install -e deeploy
-    - python3 -m pytest deeploy
+    - pip3 install -e .
+    - python3 -m pytest .
 
 build_python:
   image:
