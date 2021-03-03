@@ -29,7 +29,7 @@ build_python:
 build_docs:
   image:
     name: registry.gitlab.com/deeploy-ml/deeploy-python-client/build-docs:0.1
-  stage: release
+  stage: build
   script:
     - pydoc-markdown --render-toc -v
     - mkdocs build -f docs/mkdocs.yml
