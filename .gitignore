@@ -7,3 +7,4 @@ data/
 deeploy.egg-info/
 dist/
 .pytest_cache/
+docs/mkdocs.yml
