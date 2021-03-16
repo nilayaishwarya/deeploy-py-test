@@ -7,7 +7,7 @@
 </br>Human involvement is essential in successful ML deployments. 
 </br>Deeploy standardizes Deployment, Monitoring and Explainability of ML models.
 
-[![GitLab license](https://img.shields.io/gitlab/license/deeploy-ml/deeploy-python-client.svg)](https://img.shields.io/gitlab/license/deeploy-ml/deeploy-python-client.svg)
+[![PyPi license](https://img.shields.io/pypi/l/deeploy.svg)](https://img.shields.io/pypi/l/deeploy.svg)
 [![PyPI version shields.io](https://img.shields.io/pypi/v/deeploy.svg)](https://img.shields.io/pypi/v/deeploy.svg)
 [![CI](https://gitlab.com/deeploy-ml/deeploy-python-client/badges/master/pipeline.svg)](https://gitlab.com/deeploy-ml/deeploy-python-client/pipelines)
 
