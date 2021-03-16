@@ -29,6 +29,7 @@ renderer:
         - 'deeploy.models.deploy_options.*'
         - 'deeploy.enums.prediction_method.*'
   mkdocs_config:
+    repo_url: https://gitlab.com/deeploy-ml/deeploy-python-client
     docs_dir: content
     site_name: Deeploy Python Client
     theme:
