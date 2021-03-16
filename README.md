@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://deeploy.ml"><img src="./docs/images/logo-letters.png" width="250px"></a>
+<a href="https://deeploy.ml"><img src="./docs/content/img/logo-letters.png" width="250px"></a>
 
 **Deeploy - Thoughtful Machine Learning Ops**
 
