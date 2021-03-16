@@ -9,6 +9,7 @@
 
 [![GitLab license](https://img.shields.io/gitlab/license/deeploy-ml/deeploy-python-client.svg)](https://img.shields.io/gitlab/license/deeploy-ml/deeploy-python-client.svg)
 [![PyPI version shields.io](https://img.shields.io/pypi/v/deeploy.svg)](https://img.shields.io/pypi/v/deeploy.svg)
+[![CI](https://gitlab.com/deeploy-ml/deeploy-python-client/badges/master/pipeline.svg)](https://gitlab.com/deeploy-ml/deeploy-python-client/pipelines)
 
 </div>
 
@@ -16,3 +17,5 @@
 ## Deeploy Python Client
 
 Python client for interacting with Deeploy.
+
+Documenation for this Python module can be found [here](https://deeploy-ml.gitlab.io/deeploy-python-client/).
