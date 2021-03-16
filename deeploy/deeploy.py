@@ -1,8 +1,12 @@
 import logging
 from typing import Optional, List, Any, Callable
 import os
+import shutil
+import uuid
 
 from pydantic import BaseModel
+import yaml
+import requests
 
 from .services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from .models import Repository, ClientConfig, Deployment, CreateDeployment, DeployOptions
@@ -84,6 +88,11 @@ class Client(object):
         model_folder = os.path.join(
             self.__config.local_repository_path, 'model')
         model_wrapper.save(model_folder)
+        total_file_sizes_model = self.__get_upload_size(model_folder)
+        blob_storage_link = self.__upload_folder_to_blob(model_folder)
+        shutil.rmtree(model_folder)
+        os.mkdir(model_folder)
+        self.__create_reference_file(model_folder, blob_storage_link)
         self.__git_service.add_folder_to_staging('model')
         commit_message = ':sparkles: Add new model'
 
@@ -94,6 +103,11 @@ class Client(object):
             explainer_folder = os.path.join(
                 self.__config.local_repository_path, 'explainer')
             explainer_wrapper.save(explainer_folder)
+            total_file_sizes_explainer = self.__get_upload_size(explainer_folder)
+            blob_storage_link = self.__upload_folder_to_blob(explainer_folder)
+            shutil.rmtree(explainer_folder)
+            os.mkdir(explainer_folder)
+            self.__create_reference_file(explainer_folder, blob_storage_link)
             self.__git_service.add_folder_to_staging('explainer')
             commit_message += ' and explainer'
             explainer_type = explainer_wrapper.get_explainer_type()
@@ -186,4 +200,35 @@ class Client(object):
             self.__git_service.delete_folder_from_staging('explainer')
         else:  # folder exists and empty
             pass
+        return
+
+    def __get_upload_size(self, local_folder_path: str) -> int:
+        total_file_sizes = 0
+        for root, _, files in os.walk(local_folder_path):
+            for single_file in files:
+                file_path = os.path.join(root, single_file)
+                file_size = os.path.getsize(file_path)
+                total_file_sizes += file_size
+        return total_file_sizes
+
+    def __upload_folder_to_blob(self, local_folder_path: str) -> str:
+        upload_locations = list()
+        for root, _, files in os.walk(local_folder_path):
+            for single_file in files:
+                file_path = os.path.join(root, single_file)
+                uuid = str(uuid.uuid4())
+                blob_file_location = self.__deeploy_service.upload_blob_file(file_path, \
+                    self.__config.workspace_id, self.__config.repository_id, uuid)
+                upload_locations.append(blob_file_location)
+        storage_prefix = upload_locations[0].split('//')[0] + '//'
+        upload_locations_no_storage_prefix = list(map(lambda x: x.replace(storage_prefix,''),upload_locations))
+        common_path_prefix = os.path.commonpath(upload_locations_no_storage_prefix)
+        return storage_prefix + common_path_prefix
+    
+    def __create_reference_file(self, local_folder_path: str, blob_storage_link: str) -> None:
+        file_path = os.path.join(local_folder_path, 'reference.yaml')
+        data = { 'reference': blob_storage_link }
+
+        with open(file_path, 'w') as outfile:
+            yaml.dump(data, outfile, default_flow_style=False)
         return

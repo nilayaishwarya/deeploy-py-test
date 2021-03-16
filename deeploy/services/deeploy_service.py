@@ -90,3 +90,14 @@ class DeeployService(object):
         workspace = parse_obj_as(Workspace, workspace_response.json())
 
         return workspace
+
+    def upload_blob_file(self, local_file_path: str, workspace_id: str, repository_id: str, uuid: str) -> str:
+        url = '%s/v2/workspaces/%s/repositories/%s/upload' % (self.__host, workspace_id, repository_id)
+        params = {
+            'commitSha': uuid,
+            'folderPath': local_file_path,
+        }
+        files = { 'file': open(local_file_path, 'rb') }
+        r = requests.post(url, files=files, params=params)
+        blob_storage_path = r.json()['data']['referencePath']
+        return blob_storage_path

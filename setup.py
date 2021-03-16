@@ -15,6 +15,7 @@ setuptools.setup(
         "dill>=0.3.3",
         "ipython>=7.20.0",
         "nbconvert>=6.0.7",
+        "pyyaml==5.4.1",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
