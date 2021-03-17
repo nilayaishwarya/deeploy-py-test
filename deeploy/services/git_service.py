@@ -46,7 +46,7 @@ class GitService(object):
         return
 
     def delete_folder_from_staging(self, relative_folder_path: str) -> None:
-        self.repository.index.remove([relative_folder_path], False, r=True)
+        self.repository.index.remove([relative_folder_path], False, r=True, ignore_unmatch=True)
         return
 
     def commit(self, commit_message: str) -> str:
@@ -63,7 +63,7 @@ class GitService(object):
     def pull(self) -> None:
         """Pull from the default remote repository
         """
-        self.remote.pull()
+        self.remote.pull(ff_only=True)
         return
 
     def push(self) -> None:

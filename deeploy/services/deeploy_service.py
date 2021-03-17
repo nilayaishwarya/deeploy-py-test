@@ -1,6 +1,7 @@
 import base64
 import logging
 from typing import Optional, List, Any
+import os
 
 import requests
 from pydantic import parse_obj_as
@@ -75,7 +76,7 @@ class DeeployService(object):
             raise Exception('Failed to create the deployment.')
 
         deployment = parse_obj_as(
-            Deployment, deployment_response.json()['data'])
+            Deployment, deployment_response.json())
 
         return deployment
 
@@ -91,13 +92,13 @@ class DeeployService(object):
 
         return workspace
 
-    def upload_blob_file(self, local_file_path: str, workspace_id: str, repository_id: str, uuid: str) -> str:
+    def upload_blob_file(self, local_file_path: str, relative_folder_path: str, workspace_id: str, repository_id: str, uuid: str) -> str:
         url = '%s/v2/workspaces/%s/repositories/%s/upload' % (self.__host, workspace_id, repository_id)
         params = {
             'commitSha': uuid,
-            'folderPath': local_file_path,
+            'folderPath': relative_folder_path,
         }
         files = { 'file': open(local_file_path, 'rb') }
-        r = requests.post(url, files=files, params=params)
+        r = requests.post(url, files=files, params=params, auth=(self.__access_key, self.__secret_key))
         blob_storage_path = r.json()['data']['referencePath']
         return blob_storage_path

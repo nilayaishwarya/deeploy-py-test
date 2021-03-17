@@ -213,17 +213,19 @@ class Client(object):
 
     def __upload_folder_to_blob(self, local_folder_path: str) -> str:
         upload_locations = list()
+        relative_folder_path = os.path.relpath(local_folder_path, self.__config.local_repository_path)
+
         for root, _, files in os.walk(local_folder_path):
             for single_file in files:
                 file_path = os.path.join(root, single_file)
-                uuid = str(uuid.uuid4())
-                blob_file_location = self.__deeploy_service.upload_blob_file(file_path, \
-                    self.__config.workspace_id, self.__config.repository_id, uuid)
+                blob_uuid = str(uuid.uuid4())
+                blob_file_location = self.__deeploy_service.upload_blob_file(file_path, relative_folder_path, \
+                    self.__config.workspace_id, self.__config.repository_id, blob_uuid)
                 upload_locations.append(blob_file_location)
-        storage_prefix = upload_locations[0].split('//')[0] + '//'
-        upload_locations_no_storage_prefix = list(map(lambda x: x.replace(storage_prefix,''),upload_locations))
-        common_path_prefix = os.path.commonpath(upload_locations_no_storage_prefix)
-        return storage_prefix + common_path_prefix
+
+        partition = upload_locations[0].partition(relative_folder_path)
+        blob_folder_path = partition[0] + partition[1]
+        return blob_folder_path
     
     def __create_reference_file(self, local_folder_path: str, blob_storage_link: str) -> None:
         file_path = os.path.join(local_folder_path, 'reference.yaml')

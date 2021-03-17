@@ -1,5 +1,6 @@
 import os
 import shutil
+import logging
 
 
 def to_lower_camel(string: str) -> str:
@@ -22,7 +23,7 @@ def delete_all_contents_in_directory(folder_path: str) -> None:
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
         except Exception as e:
-            print('Failed to delete %s. Reason: %s' % (file_path, e))
+            logging.error('Failed to delete %s. Reason: %s' % (file_path, e))
     return
 
 

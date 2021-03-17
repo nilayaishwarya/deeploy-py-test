@@ -8,7 +8,7 @@ from deeploy.common import to_lower_camel
 class Workspace(BaseModel):
     id: str
     name: str
-    description: str
+    description: Optional[str]
     owner_id: str
     created_at: str
     updated_at: str
