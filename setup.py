@@ -1,12 +1,22 @@
 import setuptools
 
+with open("docs/pypi.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setuptools.setup(
     name='deeploy',
     version='0.0.2',
-    description='The official Deeploy client for Python.',
+    description='The official Deeploy client for Python',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author='Lars Suanet',
     author_email='lars@deeploy.ml',
     packages=setuptools.find_packages(),
+    url="https://gitlab.com/deeploy-ml/deeploy-python-client",
+    project_urls={
+        "Documentation": "https://deeploy-ml.gitlab.io/deeploy-python-client/",
+        "Deeploy website": "https://deeploy.ml",
+    },
     install_requires=[
         "pydantic>=1.7.3",
         "gitpython>=3.1.12",
