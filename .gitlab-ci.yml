@@ -10,7 +10,7 @@ stages:
 
 test_python:
   image:
-    name: registry.gitlab.com/deeploy-ml/deeploy-python-client/test-python:0.1
+    name: registry.gitlab.com/deeploy-ml/deeploy-python-client/test-python:0.3
   stage: test
   script:
     - pip3 install -e .
