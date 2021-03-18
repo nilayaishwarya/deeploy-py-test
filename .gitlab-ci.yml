@@ -46,7 +46,7 @@ release_pypi:
     name: registry.gitlab.com/deeploy-ml/deeploy-python-client/release-pypi:0.1
   stage: release
   script:
-    - python3 -m twine upload dist/*
+    - python3 -m twine upload --non-interactive dist/*
   dependencies:
     - build_python
   needs:
