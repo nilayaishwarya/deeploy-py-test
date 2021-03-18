@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='deeploy',
-    version='0.0.1',
+    version='0.0.2',
     description='The official Deeploy client for Python.',
     author='Lars Suanet',
     author_email='lars@deeploy.ml',
