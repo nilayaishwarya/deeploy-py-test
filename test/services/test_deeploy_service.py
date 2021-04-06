@@ -3,7 +3,7 @@ import requests_mock
 
 from deeploy.services import DeeployService
 from deeploy.models import Repository, Commit, Deployment, CreateDeployment
-from deeploy.enums import ModelType, PredictionMethod, ExplainerType
+from deeploy.enums import ModelType, ExplainerType
 
 WORKSPACE_ID = 'abc'
 
@@ -152,8 +152,6 @@ def test__create_deployment(deeploy_service):
         'inputTensorSize': None,
         'isArchived': False,
         'kfServingId': "x63921818-f908-44d6-af72-17e9beef7b6c",
-        'method': "predict",
-        'modelClassName': None,
         'modelServerless': False,
         'modelType': 2,
         'name': "client test",
@@ -181,8 +179,6 @@ def test__create_deployment(deeploy_service):
             'inputTensorSize': None,
             'isArchived': False,
             'kfServingId': "x63921818-f908-44d6-af72-17e9beef7b6c",
-            'method': "predict",
-            'modelClassName': None,
             'modelServerless': False,
             'modelType': 2,
             'name': "client test",
@@ -208,7 +204,6 @@ def test__create_deployment(deeploy_service):
             'name': "client test",
             'description': "the first test",
             'model_type': ModelType.SKLEARN,
-            'method': PredictionMethod.PREDICT,
             'model_serverless': False,
             'explainer_type': ExplainerType.SHAP_KERNEL,
             'explainer_serverless': False,
