@@ -5,7 +5,6 @@ loaders:
       - deeploy
       - deeploy.deeploy
       - deeploy.models.deploy_options
-      - deeploy.enums.prediction_method
 processors:
   - type: filter
     exclude_private: true
