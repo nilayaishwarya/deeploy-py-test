@@ -2,4 +2,4 @@
 
 Python client for interacting with Deeploy.
 
-Documenation for this Python module can be found [here](https://deeploy-ml.gitlab.io/deeploy-python-client/).
+Read the [documentation](https://deeploy-ml.gitlab.io/deeploy-python-client/) for this client or visit the [Deeploy website](https://deeploy.ml) to learn more about Deeploy.
