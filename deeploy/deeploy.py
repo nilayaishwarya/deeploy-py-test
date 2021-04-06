@@ -10,7 +10,7 @@ import requests
 
 from .services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from .models import Repository, ClientConfig, Deployment, CreateDeployment, DeployOptions
-from .enums import PredictionMethod, ExplainerType
+from .enums import ExplainerType
 from .common import delete_all_contents_in_directory, directory_exists, directory_empty
 
 
@@ -126,8 +126,6 @@ class Client(object):
             'example_input': options.example_input,
             'example_output': options.example_output,
             'model_type': model_wrapper.get_model_type().value,
-            'model_class_name': options.model_class_name,
-            'method': options.method,
             'model_serverless': options.model_serverless,
             'branch_name': self.__git_service.get_current_branch_name(),
             'commit_sha': commit_sha,

@@ -7,7 +7,7 @@ import requests
 from pydantic import parse_obj_as
 
 from deeploy.models import Deployment, Repository, Commit, CreateDeployment, Workspace
-from deeploy.enums import ModelType, ExplainerType, PredictionMethod
+from deeploy.enums import ModelType, ExplainerType
 
 
 class DeeployService(object):
