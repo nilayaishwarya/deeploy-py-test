@@ -22,6 +22,5 @@ class ClientConfig(BaseModel):
     secret_key: str
     host: str
     workspace_id: str
-    local_repository_path: str
     repository_id: str
     branch_name: Optional[str]

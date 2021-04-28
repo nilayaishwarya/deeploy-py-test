@@ -6,8 +6,8 @@ import os
 import requests
 from pydantic import parse_obj_as
 
-from deeploy.models import Deployment, Repository, Commit, CreateDeployment, Workspace
-from deeploy.enums import ModelType, ExplainerType
+from deeploy.models import Deployment, Repository, Commit, CreateDeployment, Workspace, V1Prediction, V2Prediction
+from deeploy.enums import ModelType, ExplainerType, PredictionVersion
 
 
 class DeeployService(object):
@@ -38,7 +38,6 @@ class DeeployService(object):
         return False
 
     def get_repositories(self, workspace_id: str) -> List[Repository]:
-
         url = '%s/v2/workspaces/%s/repositories' % (
             self.__host, workspace_id)
         params = {
@@ -102,3 +101,43 @@ class DeeployService(object):
         r = requests.post(url, files=files, params=params, auth=(self.__access_key, self.__secret_key))
         blob_storage_path = r.json()['data']['referencePath']
         return blob_storage_path
+
+    def __check_prediction_version(self, prediction_response: dict) -> PredictionVersion:
+        if 'predictions' in prediction_response.json():
+             return PredictionVersion.V1
+        else:
+            return PredictionVersion.V2
+
+    def __parse_prediction(self, prediction_response: dict) -> V1Prediction or V2Prediction:
+        if self.__check_prediction_version(prediction_response) == PredictionVersion.V1:
+             prediction = parse_obj_as(
+                V1Prediction, prediction_response.json())
+        else:
+            prediction = parse_obj_as(
+                V2Prediction, prediction_response.json())
+        return prediction
+
+    def predict(self, workspace_id: str, deployment_id: str, request_body: dict) -> V1Prediction or V2Prediction:
+        url = '%s/v2/workspaces/%s/deployments/%s/predict' % (self.__host, workspace_id, deployment_id)
+
+        prediction_response = requests.post(
+            url, json=request_body, auth=(self.__access_key, self.__secret_key))
+        if not self.__request_is_successful(prediction_response):
+            raise Exception('Failed to call predictive model.')
+        prediction = self.__parse_prediction(prediction_response)
+        return prediction
+
+
+    def explain(self, workspace_id: str, deployment_id: str, request_body: dict, image: bool) -> object:
+        url = '%s/v2/workspaces/%s/deployments/%s/explain' % (self.__host, workspace_id, deployment_id)
+        params = {
+            'image': image,
+        }
+
+        explanation_reponse = requests.post(
+            url, json=request_body, params=params, auth=(self.__access_key, self.__secret_key))
+        if not self.__request_is_successful(explanation_reponse):
+            raise Exception('Failed to call explainer model.')
+        explanation = explanation_reponse.json()
+        return explanation
+

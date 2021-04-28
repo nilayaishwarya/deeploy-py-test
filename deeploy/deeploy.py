@@ -9,7 +9,7 @@ import yaml
 import requests
 
 from .services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
-from .models import Repository, ClientConfig, Deployment, CreateDeployment, DeployOptions
+from .models import Repository, ClientConfig, Deployment, CreateDeployment, DeployOptions, V1Prediction, V2Prediction
 from .enums import ExplainerType
 from .common import delete_all_contents_in_directory, directory_exists, directory_empty
 
@@ -22,7 +22,7 @@ class Client(object):
     __config: ClientConfig
 
     def __init__(self, access_key: str, secret_key: str, host: str, workspace_id: str,
-                 local_repository_path: str, branch_name: str = None) -> None:
+                 branch_name: str = None) -> None:
         """Initialise the Deeploy client
         Parameters:
             access_key (str): Personal Access Key generated from the Deeploy UI
@@ -30,8 +30,6 @@ class Client(object):
             host (str): The host at which Deeploy is located, i.e. deeploy.example.com
             workspace_id (str): The ID of the workspace in which your repository 
                 is located
-            local_repository_path (str): Absolute path to the local git repository 
-                which is connected to Deeploy
             branch_name (str, optional): The banchname on which to commit new models. 
                 Defaults to the current branchname.
         """
@@ -40,13 +38,10 @@ class Client(object):
             'secret_key': secret_key,
             'host': host,
             'workspace_id': workspace_id,
-            'local_repository_path': local_repository_path,
             'branch_name': branch_name,
             'repository_id': '',
         })
-        
 
-        self.__git_service = GitService(local_repository_path)
         self.__deeploy_service = DeeployService(
             access_key,
             secret_key,
@@ -56,7 +51,25 @@ class Client(object):
         if not self.__are_clientoptions_valid(self.__config):
             raise Exception('Client options not valid')
 
-        repository_in_workspace, repository_id = self.__is_git_repository_in_workspace()
+        return
+
+    def deploy(self, model: Any, options: DeployOptions, local_repository_path: str, explainer: Any = None, overwrite: bool = False,
+               commit_message: str = None) -> Deployment:
+        """Deploy a model on Deeploy
+        Parameters:
+            model (Any): The class instance of an ML model
+            options (DeployOptions): An instance of the deploy options class 
+                containing the deployment options
+            local_repository_path (str): Absolute path to the local git repository 
+                which is connected to Deeploy
+            explainer (Any, optional): The class instance of an optional model explainer
+            overwrite (bool, optional): Whether or not to overwrite files that are in the 'model' and 'explainer' 
+                folders in the git folder. Defaults to False
+            commit_message (str, optional): Commit message to use
+        """
+        git_service = GitService(local_repository_path)
+
+        repository_in_workspace, repository_id = self.__is_git_repository_in_workspace(git_service)
 
         if not repository_in_workspace:
             raise Exception(
@@ -64,27 +77,13 @@ class Client(object):
         else:
             self.__config.repository_id = repository_id
 
-        return
-
-    def deploy(self, model: Any, options: DeployOptions, explainer: Any = None, overwrite: bool = False,
-               commit_message: str = None) -> Deployment:
-        """Deploy a model on Deeploy
-        Parameters:
-            model (Any): The class instance of an ML model
-            options (DeployOptions): An instance of the deploy options class 
-                containing the deployment options
-            explainer (Any, optional): The class instance of an optional model explainer
-            overwrite (bool, optional): Whether or not to overwrite files that are in the 'model' and 'explainer' 
-                folders in the git folder. Defaults to False
-            commit_message (str, optional): Commit message to use
-        """
         logging.info('Pulling from the remote repository...')
-        self.__git_service.pull()
+        git_service.pull()
         logging.info('Successfully pulled from the remote repository.')
 
         logging.info('Saving the model to disk...')
         model_wrapper = ModelWrapper(model, pytorch_model_file_path=options.pytorch_model_file_path)
-        self.__prepare_model_directory(overwrite)
+        self.__prepare_model_directory(git_service, overwrite)
         model_folder = os.path.join(
             self.__config.local_repository_path, 'model')
         model_wrapper.save(model_folder)
@@ -93,7 +92,7 @@ class Client(object):
         shutil.rmtree(model_folder)
         os.mkdir(model_folder)
         self.__create_reference_file(model_folder, blob_storage_link)
-        self.__git_service.add_folder_to_staging('model')
+        git_service.add_folder_to_staging('model')
         commit_message = ':sparkles: Add new model'
 
         if explainer:
@@ -108,15 +107,15 @@ class Client(object):
             shutil.rmtree(explainer_folder)
             os.mkdir(explainer_folder)
             self.__create_reference_file(explainer_folder, blob_storage_link)
-            self.__git_service.add_folder_to_staging('explainer')
+            git_service.add_folder_to_staging('explainer')
             commit_message += ' and explainer'
             explainer_type = explainer_wrapper.get_explainer_type()
         else:
             explainer_type = ExplainerType.NO_EXPLAINER
 
         logging.info('Committing and pushing the result to the remote.')
-        commit_sha = self.__git_service.commit(commit_message)
-        self.__git_service.push()
+        commit_sha = git_service.commit(commit_message)
+        git_service.push()
 
         deployment_options = {
             'repository_id': self.__config.repository_id,
@@ -127,7 +126,7 @@ class Client(object):
             'example_output': options.example_output,
             'model_type': model_wrapper.get_model_type().value,
             'model_serverless': options.model_serverless,
-            'branch_name': self.__git_service.get_current_branch_name(),
+            'branch_name': git_service.get_current_branch_name(),
             'commit_sha': commit_sha,
             'explainer_type': explainer_type.value,
             'explainer_serverless': options.explainer_serverless
@@ -137,6 +136,28 @@ class Client(object):
             self.__config.workspace_id, CreateDeployment(**deployment_options))
 
         return deployment
+
+    def predict(self, deployment_id: str, request_body: dict) -> V1Prediction or V2Prediction:
+        """Make a predict call
+        Parameters:
+            deployment_id (str): ID of the Deeploy deployment
+            request_body (dict): Request body with input data for the model
+        """
+
+        workspace_id = self.__config.workspace_id
+        prediction = self.__deeploy_service.predict(workspace_id, deployment_id, request_body)
+        return prediction
+
+    def explain(self, deployment_id: str, request_body: dict, image: bool) -> object:
+        """Make an explain call
+        Parameters:
+            deployment_id (str): ID of the Deeploy deployment
+            request_body (dict): Request body with input data for the model
+            image (bool): Return image or not
+        """
+        workspace_id = self.__config.workspace_id
+        explanation = self.__deeploy_service.explain(workspace_id, deployment_id, request_body, image)
+        return explanation
 
     def __are_clientoptions_valid(self, config: ClientConfig) -> bool:
         """Check if the supplied options are valid
@@ -148,8 +169,8 @@ class Client(object):
 
         return True
 
-    def __is_git_repository_in_workspace(self) -> (bool, str):
-        remote_url = self.__git_service.get_remote_url()
+    def __is_git_repository_in_workspace(self, git_service: GitService) -> (bool, str):
+        remote_url = git_service.get_remote_url()
         workspace_id = self.__config.workspace_id
 
         repositories = self.__deeploy_service.get_repositories(workspace_id)
@@ -162,7 +183,7 @@ class Client(object):
 
         return False, None
 
-    def __prepare_model_directory(self, overwrite=False) -> None:
+    def __prepare_model_directory(self, git_service: GitService, overwrite=False) -> None:
         model_folder_path = os.path.join(
             self.__config.local_repository_path, 'model')
         if not directory_exists(model_folder_path):
@@ -176,12 +197,12 @@ class Client(object):
                 raise Exception(
                     'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' % model_folder_path)
             delete_all_contents_in_directory(model_folder_path)
-            self.__git_service.delete_folder_from_staging('model')
+            git_service.delete_folder_from_staging('model')
         else:  # folder exists and empty
             pass
         return
 
-    def __prepare_explainer_directory(self, overwrite=False) -> None:
+    def __prepare_explainer_directory(self, git_service: GitService, overwrite=False) -> None:
         explainer_folder_path = os.path.join(
             self.__config.local_repository_path, 'explainer')
         if not directory_exists(explainer_folder_path):
@@ -195,7 +216,7 @@ class Client(object):
                 raise Exception(
                     'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' % explainer_folder_path)
             delete_all_contents_in_directory(explainer_folder_path)
-            self.__git_service.delete_folder_from_staging('explainer')
+            git_service.delete_folder_from_staging('explainer')
         else:  # folder exists and empty
             pass
         return

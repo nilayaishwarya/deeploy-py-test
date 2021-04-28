@@ -10,3 +10,4 @@ dist/
 docs/mkdocs.yml
 docs/content/*.md
 docs/site
+*.DS_Store

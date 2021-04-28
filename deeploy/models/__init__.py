@@ -9,3 +9,5 @@ from .create_deployment import CreateDeployment
 from .workspace import Workspace
 
 from .deploy_options import DeployOptions
+
+from .prediction import V1Prediction, V2Prediction
