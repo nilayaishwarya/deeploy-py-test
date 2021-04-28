@@ -2,7 +2,7 @@ import pytest
 import requests_mock
 
 from deeploy.services import DeeployService
-from deeploy.models import Repository, Commit, Deployment, CreateDeployment
+from deeploy.models import Repository, Commit, Deployment, CreateDeployment, V1Prediction, V2Prediction
 from deeploy.enums import ModelType, ExplainerType
 
 WORKSPACE_ID = 'abc'
@@ -219,3 +219,103 @@ def test__get_workspace(deeploy_service):
 
 def test__upload_blob_file(deeploy_service):
     pass
+
+def test_predict(deeploy_service):
+    request_body={
+    "instances": [
+        [6.8,  2.8,  4.8,  1.4],
+        [6.0,  3.4,  4.5,  1.6]
+     ]
+    }
+    return_object_V1 = {
+        "predictions": [
+            {
+                "scores": [0.999114931, 9.20987877e-05, 0.000136786213, 0.000337257545, 0.000300532585, 1.84813616e-05],
+                "prediction": 0,
+                "key": "1"
+            }
+        ]
+    }
+    return_object_V2 = {
+        "id": "823248cc-d770-4a51-9606-16803395569c",
+        "model_name": "iris-classifier",
+        "model_version": "v1.0.0",
+        "outputs": [
+            {
+            "data": [1, 2],
+            "datatype": "FP32",
+            "name": "predict",
+            "parameters": 'null',
+            "shape": [2]
+            }
+        ]
+    }
+    expected_output_V1 = V1Prediction(
+    **{
+        "predictions": [
+            {
+                "scores": [0.999114931, 9.20987877e-05, 0.000136786213, 0.000337257545, 0.000300532585, 1.84813616e-05],
+                "prediction": 0,
+                "key": "1"
+            }
+        ]
+    })
+    expected_output_V2 = V2Prediction(
+    **{
+        "id": "823248cc-d770-4a51-9606-16803395569c",
+        "model_name": "iris-classifier",
+        "model_version": "v1.0.0",
+        "outputs": [
+            {
+            "data": [1, 2],
+            "datatype": "FP32",
+            "name": "predict",
+            "parameters": 'null',
+            "shape": [2]
+            }
+        ]
+    })
+
+    with requests_mock.Mocker() as m:
+        m.post('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/predict' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'), \
+            json=return_object_V1)
+        prediction = deeploy_service.predict(workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body)
+        assert prediction == expected_output_V1
+
+    with requests_mock.Mocker() as m:
+        m.post('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/predict' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'), \
+            json=return_object_V2)
+        prediction = deeploy_service.predict(workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body)
+        assert prediction == expected_output_V2
+
+    with requests_mock.Mocker() as m:
+        m.post('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/predict' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'), \
+            status_code=400)
+        with pytest.raises(Exception):
+            deeploy_service.predict(workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body)
+
+def test_explain(deeploy_service):
+    request_body={
+        "inputs": [
+            {
+            "name": "input-0",
+            "shape": [2, 4],
+            "datatype": "FP32",
+            "data": [
+                [6.8, 2.8, 4.8, 1.4],
+                [6.0, 3.4, 4.5, 1.6]
+            ]
+            }
+        ]
+    }
+
+    with requests_mock.Mocker() as m:
+        m.post('/v2/workspaces/%s/deployments/%s/explain' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'), \
+            json=request_body)
+        assert deeploy_service.explain(workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body, image=True)
+
+    with requests_mock.Mocker() as m:
+        m.post('/v2/workspaces/%s/deployments/%s/explain' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'), \
+            status_code=400)
+        with pytest.raises(Exception):
+            deeploy_service.explain(workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body, image=True)
