@@ -122,6 +122,7 @@ class DeeployService(object):
 
         prediction_response = requests.post(
             url, json=request_body, auth=(self.__access_key, self.__secret_key))
+            
         if not self.__request_is_successful(prediction_response):
             raise Exception('Failed to call predictive model.')
         prediction = self.__parse_prediction(prediction_response)

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from pydantic import BaseModel
 
@@ -11,7 +11,6 @@ class V1Prediction(Prediction):
 class V2Prediction(Prediction):
     id: str
     model_name: str
-    model_version: str
+    model_version: Optional[str]
+    parameters: Optional[Dict]
     outputs: List[dict]
-
-
