@@ -82,28 +82,30 @@ class Client(object):
         logging.info('Successfully pulled from the remote repository.')
 
         logging.info('Saving the model to disk...')
-        model_wrapper = ModelWrapper(model, pytorch_model_file_path=options.pytorch_model_file_path)
-        self.__prepare_model_directory(git_service, overwrite)
+        model_wrapper = ModelWrapper(model, 
+            pytorch_model_file_path=options.pytorch_model_file_path, 
+            pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
+        self.__prepare_model_directory(git_service, local_repository_path, overwrite)
         model_folder = os.path.join(
-            self.__config.local_repository_path, 'model')
+            local_repository_path, 'model')
         model_wrapper.save(model_folder)
         total_file_sizes_model = self.__get_upload_size(model_folder)
-        blob_storage_link = self.__upload_folder_to_blob(model_folder)
+        blob_storage_link = self.__upload_folder_to_blob(local_repository_path, model_folder)
         shutil.rmtree(model_folder)
         os.mkdir(model_folder)
         self.__create_reference_file(model_folder, blob_storage_link)
         git_service.add_folder_to_staging('model')
-        commit_message = ':sparkles: Add new model'
+        commit_message = '[Deeploy Client] Add new model'
 
         if explainer:
             logging.info('Saving the explainer to disk...')
             explainer_wrapper = ExplainerWrapper(explainer)
-            self.__prepare_explainer_directory(overwrite)
+            self.__prepare_explainer_directory(git_service, local_repository_path, overwrite)
             explainer_folder = os.path.join(
-                self.__config.local_repository_path, 'explainer')
+                local_repository_path, 'explainer')
             explainer_wrapper.save(explainer_folder)
             total_file_sizes_explainer = self.__get_upload_size(explainer_folder)
-            blob_storage_link = self.__upload_folder_to_blob(explainer_folder)
+            blob_storage_link = self.__upload_folder_to_blob(local_repository_path, explainer_folder)
             shutil.rmtree(explainer_folder)
             os.mkdir(explainer_folder)
             self.__create_reference_file(explainer_folder, blob_storage_link)
@@ -127,7 +129,7 @@ class Client(object):
             'model_type': model_wrapper.get_model_type().value,
             'model_serverless': options.model_serverless,
             'branch_name': git_service.get_current_branch_name(),
-            'commit_sha': commit_sha,
+            'commit': commit_sha,
             'explainer_type': explainer_type.value,
             'explainer_serverless': options.explainer_serverless
         }
@@ -183,9 +185,10 @@ class Client(object):
 
         return False, None
 
-    def __prepare_model_directory(self, git_service: GitService, overwrite=False) -> None:
+    def __prepare_model_directory(self, git_service: GitService, local_repository_path: str, 
+        overwrite=False) -> None:
         model_folder_path = os.path.join(
-            self.__config.local_repository_path, 'model')
+            local_repository_path, 'model')
         if not directory_exists(model_folder_path):
             try:
                 os.mkdir(model_folder_path)
@@ -202,9 +205,9 @@ class Client(object):
             pass
         return
 
-    def __prepare_explainer_directory(self, git_service: GitService, overwrite=False) -> None:
+    def __prepare_explainer_directory(self, git_service: GitService, local_repository_path: str, overwrite=False) -> None:
         explainer_folder_path = os.path.join(
-            self.__config.local_repository_path, 'explainer')
+            local_repository_path, 'explainer')
         if not directory_exists(explainer_folder_path):
             try:
                 os.mkdir(explainer_folder_path)
@@ -230,16 +233,16 @@ class Client(object):
                 total_file_sizes += file_size
         return total_file_sizes
 
-    def __upload_folder_to_blob(self, local_folder_path: str) -> str:
+    def __upload_folder_to_blob(self, local_repository_path: str, local_folder_path: str) -> str:
         upload_locations = list()
-        relative_folder_path = os.path.relpath(local_folder_path, self.__config.local_repository_path)
-
+        blob_folder_uuid = str(uuid.uuid4())
+        relative_folder_path = os.path.relpath(local_folder_path, local_repository_path)
         for root, _, files in os.walk(local_folder_path):
             for single_file in files:
+                relative_file_path = os.path.join(relative_folder_path, os.path.relpath(root, local_folder_path))
                 file_path = os.path.join(root, single_file)
-                blob_uuid = str(uuid.uuid4())
-                blob_file_location = self.__deeploy_service.upload_blob_file(file_path, relative_folder_path, \
-                    self.__config.workspace_id, self.__config.repository_id, blob_uuid)
+                blob_file_location = self.__deeploy_service.upload_blob_file(file_path, relative_file_path, \
+                    self.__config.workspace_id, self.__config.repository_id, blob_folder_uuid)
                 upload_locations.append(blob_file_location)
 
         partition = upload_locations[0].partition(relative_folder_path)

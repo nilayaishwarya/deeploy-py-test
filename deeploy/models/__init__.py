@@ -1,6 +1,5 @@
 from .deployment import Deployment
 from .repository import Repository
-from .commit import Commit
 
 from .client_options import ClientConfig
 

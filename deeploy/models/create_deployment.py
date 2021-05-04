@@ -18,7 +18,7 @@ class CreateDeployment(BaseModel):
     explainer_type: ExplainerType
     explainer_serverless: Optional[bool] = False
     branch_name: str
-    commit_sha: str
+    commit: str
 
     def to_request_body(self):
         return {
@@ -32,5 +32,5 @@ class CreateDeployment(BaseModel):
             'explainerType': self.explainer_type.value,
             'explainerServerless': self.explainer_serverless,
             'branchName': self.branch_name,
-            'commitSHA': self.commit_sha,
+            'commit': self.commit,
         }
