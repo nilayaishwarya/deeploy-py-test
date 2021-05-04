@@ -129,10 +129,12 @@ class DeeployService(object):
         return prediction
 
 
-    def explain(self, workspace_id: str, deployment_id: str, request_body: dict, image: bool) -> object:
+    def explain(self, workspace_id: str, deployment_id: str, request_body: dict, image: bool = False) -> object:
         url = '%s/v2/workspaces/%s/deployments/%s/explain' % (self.__host, workspace_id, deployment_id)
         params = {
-            'image': image,
+            'image': str(image).lower(),
+            'skiplog': str(False).lower(),
+            'raw': str(False).lower(),
         }
 
         explanation_reponse = requests.post(

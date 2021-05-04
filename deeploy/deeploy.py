@@ -148,7 +148,7 @@ class Client(object):
         prediction = self.__deeploy_service.predict(workspace_id, deployment_id, request_body)
         return prediction
 
-    def explain(self, deployment_id: str, request_body: dict, image: bool) -> object:
+    def explain(self, deployment_id: str, request_body: dict, image: bool = False) -> object:
         """Make an explain call
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
