@@ -6,7 +6,7 @@ import os
 import requests
 from pydantic import parse_obj_as
 
-from deeploy.models import Deployment, Repository, Commit, CreateDeployment, Workspace, V1Prediction, V2Prediction
+from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, V1Prediction, V2Prediction
 from deeploy.enums import ModelType, ExplainerType, PredictionVersion
 
 
@@ -72,7 +72,7 @@ class DeeployService(object):
         deployment_response = requests.post(
             url, json=data, auth=(self.__access_key, self.__secret_key))
         if not self.__request_is_successful(deployment_response):
-            raise Exception('Failed to create the deployment.')
+            raise Exception('Failed to create the deployment: %s' % str(deployment_response.json()) )
 
         deployment = parse_obj_as(
             Deployment, deployment_response.json())

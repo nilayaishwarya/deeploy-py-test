@@ -26,6 +26,7 @@ setuptools.setup(
         "ipython>=7.20.0",
         "nbconvert>=6.0.7",
         "pyyaml==5.4.1",
+        "torch-model-archiver==0.3.1",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

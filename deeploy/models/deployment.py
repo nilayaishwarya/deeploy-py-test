@@ -7,21 +7,14 @@ from deeploy.enums import ModelType, ExplainerType
 
 
 class Deployment(BaseModel):
-    commit_id: str
     name: str
+    versions: Optional[List[Any]]
     workspace_id: str
     description: Optional[str]
     example_input: Optional[List[Any]]
     example_output: Optional[List[Any]]
-    model_type: ModelType
-    model_serverless: bool
-    explainer_type: Optional[ExplainerType]
-    explainer_serverless: Optional[bool]
     status: int
-    is_archived: bool
-    s3_link: str
     owner_id: str
-    repository_id: str
     kf_serving_id: Optional[str]
     public_url: Optional[str]
     id: str
