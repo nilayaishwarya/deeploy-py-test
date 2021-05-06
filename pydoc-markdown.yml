@@ -22,6 +22,10 @@ renderer:
       source: docs/markdown/index.md
     - title: Getting started
       source: docs/markdown/getting-started.md
+    - title: Deploy
+      source: docs/markdown/deploy.md
+    - title: Infer
+      source: docs/markdown/infer.md
     - title: Examples
       source: docs/markdown/examples.md
     - title: API Reference
