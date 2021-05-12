@@ -24,19 +24,6 @@ class DeeployService(object):
             raise Exception('Access keys are not valid')
         return
 
-    def __keys_are_valid(self) -> bool:
-        host_for_testing = '%s/v2/workspaces' % self.__host
-        workspaces_response = requests.get(
-            host_for_testing, auth=(self.__access_key, self.__secret_key))
-        if self.__request_is_successful(workspaces_response):
-            return True
-        return False
-
-    def __request_is_successful(self, request: requests.Response) -> bool:
-        if str(request.status_code)[0] == '2':
-            return True
-        return False
-
     def get_repositories(self, workspace_id: str) -> List[Repository]:
         url = '%s/v2/workspaces/%s/repositories' % (
             self.__host, workspace_id)
@@ -102,21 +89,6 @@ class DeeployService(object):
         blob_storage_path = r.json()['data']['referencePath']
         return blob_storage_path
 
-    def __check_prediction_version(self, prediction_response: dict) -> PredictionVersion:
-        if 'predictions' in prediction_response.json():
-             return PredictionVersion.V1
-        else:
-            return PredictionVersion.V2
-
-    def __parse_prediction(self, prediction_response: dict) -> V1Prediction or V2Prediction:
-        if self.__check_prediction_version(prediction_response) == PredictionVersion.V1:
-             prediction = parse_obj_as(
-                V1Prediction, prediction_response.json())
-        else:
-            prediction = parse_obj_as(
-                V2Prediction, prediction_response.json())
-        return prediction
-
     def predict(self, workspace_id: str, deployment_id: str, request_body: dict) -> V1Prediction or V2Prediction:
         url = '%s/v2/workspaces/%s/deployments/%s/predict' % (self.__host, workspace_id, deployment_id)
         params = {
@@ -147,3 +119,30 @@ class DeeployService(object):
         explanation = explanation_reponse.json()
         return explanation
 
+    def __keys_are_valid(self) -> bool:
+        host_for_testing = '%s/v2/workspaces' % self.__host
+        workspaces_response = requests.get(
+            host_for_testing, auth=(self.__access_key, self.__secret_key))
+        if self.__request_is_successful(workspaces_response):
+            return True
+        return False
+
+    def __request_is_successful(self, request: requests.Response) -> bool:
+        if str(request.status_code)[0] == '2':
+            return True
+        return False
+
+    def __check_prediction_version(self, prediction_response: dict) -> PredictionVersion:
+        if 'predictions' in prediction_response.json():
+             return PredictionVersion.V1
+        else:
+            return PredictionVersion.V2
+
+    def __parse_prediction(self, prediction_response: dict) -> V1Prediction or V2Prediction:
+        if self.__check_prediction_version(prediction_response) == PredictionVersion.V1:
+             prediction = parse_obj_as(
+                V1Prediction, prediction_response.json())
+        else:
+            prediction = parse_obj_as(
+                V2Prediction, prediction_response.json())
+        return prediction

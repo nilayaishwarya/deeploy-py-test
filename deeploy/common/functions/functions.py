@@ -32,3 +32,7 @@ def directory_exists(folder_path: str) -> bool:
 
 def directory_empty(folder_path: str) -> bool:
     return len(os.listdir(folder_path)) == 0
+
+def file_exists(file_path: str) -> bool:
+    return os.path.isfile(file_path)
+

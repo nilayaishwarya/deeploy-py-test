@@ -8,9 +8,9 @@ import json
 from pydantic import BaseModel, parse_obj_as
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
-from deeploy.models import Repository, ClientConfig, Deployment, CreateDeployment, DeployOptions, V1Prediction, V2Prediction, ModelReferenceJson
+from deeploy.models import ClientConfig, Deployment, CreateDeployment, DeployOptions, V1Prediction, V2Prediction, ModelReferenceJson
 from deeploy.enums import ExplainerType
-from deeploy.common import delete_all_contents_in_directory, directory_exists, directory_empty
+from deeploy.common import delete_all_contents_in_directory, directory_exists, directory_empty, file_exists
 
 
 class Client(object):
@@ -96,6 +96,10 @@ class Client(object):
         git_service.add_folder_to_staging('model')
         commit_message = '[Deeploy Client] Add new model'
 
+        metadata_path = './metadata.json'
+        self.__prepare_metadata_file(git_service, metadata_path, overwrite)
+        git_service.add_folder_to_staging(metadata_path)
+
         if explainer:
             logging.info('Saving the explainer to disk...')
             explainer_wrapper = ExplainerWrapper(explainer)
@@ -130,7 +134,7 @@ class Client(object):
             'branch_name': git_service.get_current_branch_name(),
             'commit': commit_sha,
             'explainer_type': explainer_type.value,
-            'explainer_serverless': options.explainer_serverless
+            'explainer_serverless': options.explainer_serverless,
         }
 
         deployment = self.__deeploy_service.create_deployment(
@@ -223,6 +227,21 @@ class Client(object):
             pass
         return
 
+    def __prepare_metadata_file(self, git_service: GitService, path: str, overwrite=False) -> None:
+        data = {
+            'featureLabels': []
+        }
+
+        if file_exists(path) and not overwrite:
+            raise Exception(
+                    'The file %s already exists. Pass \'overwrite=True\' to overwrite contents.' % path)
+        else:
+            try:
+                with open(path, 'w') as f:
+                    json.dump(data, f)
+            except OSError:
+                logging.error("Creation of the file %s failed" % path)
+            
     def __get_upload_size(self, local_folder_path: str) -> int:
         total_file_sizes = 0
         for root, _, files in os.walk(local_folder_path):
