@@ -10,3 +10,5 @@ from .workspace import Workspace
 from .deploy_options import DeployOptions
 
 from .prediction import V1Prediction, V2Prediction
+
+from .model_reference_json import ModelReferenceJson

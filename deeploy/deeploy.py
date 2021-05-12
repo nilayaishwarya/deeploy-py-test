@@ -1,17 +1,16 @@
 import logging
-from typing import Optional, List, Any, Callable
+from typing import Any
 import os
 import shutil
 import uuid
+import json
 
-from pydantic import BaseModel
-import yaml
-import requests
+from pydantic import BaseModel, parse_obj_as
 
-from .services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
-from .models import Repository, ClientConfig, Deployment, CreateDeployment, DeployOptions, V1Prediction, V2Prediction
-from .enums import ExplainerType
-from .common import delete_all_contents_in_directory, directory_exists, directory_empty
+from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
+from deeploy.models import Repository, ClientConfig, Deployment, CreateDeployment, DeployOptions, V1Prediction, V2Prediction, ModelReferenceJson
+from deeploy.enums import ExplainerType
+from deeploy.common import delete_all_contents_in_directory, directory_exists, directory_empty
 
 
 class Client(object):
@@ -249,10 +248,22 @@ class Client(object):
         blob_folder_path = partition[0] + partition[1]
         return blob_folder_path
     
-    def __create_reference_file(self, local_folder_path: str, blob_storage_link: str) -> None:
-        file_path = os.path.join(local_folder_path, 'reference.yaml')
-        data = { 'reference': blob_storage_link }
+    def __create_reference_file(self, local_folder_path: str, blob_storage_link: str = None, 
+        docker_image: str = None, docker_image_port: int = None) -> None:
+        file_path = os.path.join(local_folder_path, 'reference.json')
+
+        reference_json = {
+            'reference': {
+                'docker': {
+                    'image': docker_image,
+                    'port': docker_image_port,
+                },
+                'blob': blob_storage_link,
+            },
+        }
+
+        data = parse_obj_as(ModelReferenceJson, reference_json)
 
         with open(file_path, 'w') as outfile:
-            yaml.dump(data, outfile, default_flow_style=False)
+            json.dump(data.dict(), outfile)
         return
