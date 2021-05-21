@@ -91,12 +91,9 @@ class DeeployService(object):
 
     def predict(self, workspace_id: str, deployment_id: str, request_body: dict) -> V1Prediction or V2Prediction:
         url = '%s/v2/workspaces/%s/deployments/%s/predict' % (self.__host, workspace_id, deployment_id)
-        params = {
-            'skipLog': str(False).lower(),
-        }
 
         prediction_response = requests.post(
-            url, json=request_body, params=params, auth=(self.__access_key, self.__secret_key))
+            url, json=request_body, auth=(self.__access_key, self.__secret_key))
             
         if not self.__request_is_successful(prediction_response):
             raise Exception('Failed to call predictive model.')
@@ -108,8 +105,6 @@ class DeeployService(object):
         url = '%s/v2/workspaces/%s/deployments/%s/explain' % (self.__host, workspace_id, deployment_id)
         params = {
             'image': str(image).lower(),
-            'skipLog': str(False).lower(),
-            'raw': str(False).lower(),
         }
 
         explanation_reponse = requests.post(
