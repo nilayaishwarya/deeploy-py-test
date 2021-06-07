@@ -277,7 +277,9 @@ class Client(object):
                     'image': docker_image,
                     'port': docker_image_port,
                 },
-                'blob': blob_storage_link,
+                'blob': {
+                    'url': blob_storage_link,
+                },
             },
         }
 
