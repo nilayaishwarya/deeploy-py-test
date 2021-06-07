@@ -6,9 +6,12 @@ class DockerReference(BaseModel):
     image: str
     port: Optional[int]
 
+class BlobReference(BaseModel):
+    url: str
+
 class ModelReference(BaseModel):
     docker: Optional[DockerReference]
-    blob: Optional[str]
+    blob: Optional[BlobReference]
 
 class ModelReferenceJson(BaseModel):
     reference: ModelReference
