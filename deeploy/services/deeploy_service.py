@@ -121,6 +121,16 @@ class DeeployService(object):
         explanation = explanation_response.json()
         return explanation
 
+    def validate(self, workspace_id: str, deployment_id: str, log_id: str, validation_input: dict, explanation: str = None) -> None:
+        url = "%s/v2/workspaces/%s/deployments/%s/logs/%s/validations" % (self.__host, workspace_id, deployment_id, log_id)
+
+        validation_response = requests.post(url, json=validation_input, headers=self.__get_auth_header(AuthType.ALL), params=explanation)
+        if not self.__request_is_successful(validation_response):
+            if validation_response.status_code == 409:
+                raise Exception('Log has already been validated.')
+            else:
+                raise Exception('Failed to request validation.')
+
     def __keys_are_valid(self) -> bool:
         host_for_testing = '%s/v2/workspaces' % self.__host
         workspaces_response = requests.get(

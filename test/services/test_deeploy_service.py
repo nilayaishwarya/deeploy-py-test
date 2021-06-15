@@ -264,3 +264,10 @@ def test_explain(deeploy_service):
             status_code=400)
         with pytest.raises(Exception):
             deeploy_service.explain(workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body, image=True)
+
+def test_validate(deeploy_service:DeeployService):
+    with requests_mock.Mocker() as m:
+        m.post("https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/logs/%s/validations" % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc'),
+                status_code=401)
+        with pytest.raises(Exception):
+            deeploy_service.validate(workspace_id='abc', deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', log_id='abc', validation_input={})

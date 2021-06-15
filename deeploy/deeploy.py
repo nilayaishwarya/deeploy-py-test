@@ -175,6 +175,17 @@ class Client(object):
         explanation = self.__deeploy_service.explain(workspace_id, deployment_id, request_body, image)
         return explanation
 
+    def validate(self, deployment_id: str, log_id: str, validation_input: dict, explanation: str = None) -> None:
+        """Validate a log
+        Parameters:
+            deployment_id (str): ID of the Deeploy deployment
+            log_id (int): ID of the log to be validated
+            validation_input: Dict with result, value, and explanation
+            explanation: Optional explanation of the validation
+        """
+        workspace_id = self.__config.workspace_id
+        self.__deeploy_service.validate(workspace_id, deployment_id, log_id, validation_input, explanation)
+
     def __are_clientoptions_valid(self, config: ClientConfig) -> bool:
         """Check if the supplied options are valid
         """
