@@ -9,7 +9,7 @@ from requests import auth
 from requests.api import request
 from requests.auth import HTTPBasicAuth
 
-from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, V1Prediction, V2Prediction
+from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, V1Prediction, V2Prediction, PredictionLog, PredictionLogs
 from deeploy.enums import ModelType, ExplainerType, PredictionVersion, AuthType
 
 
@@ -120,6 +120,34 @@ class DeeployService(object):
             raise Exception('Failed to call explainer model.')
         explanation = explanation_response.json()
         return explanation
+        
+
+    def getOneLog(self, workspace_id: str, deployment_id: str, log_id: str) -> PredictionLog:
+        url = '%s/v2/workspaces/%s/deployments/%s/logs/%s' % (self.__host, workspace_id, deployment_id, log_id)
+        params = {
+            'logId': log_id
+        }
+        
+        log_response = requests.get(
+                url, params=params, headers=self.__get_auth_header(AuthType.ALL))
+
+        if not self.__request_is_successful(log_response):
+            raise Exception('Failed to get log %s.' % log_id)
+        print(log_response.json())
+        log = parse_obj_as(PredictionLog, log_response.json())
+        return log
+
+
+    def getLogs(self, workspace_id: str, deployment_id: str) -> PredictionLogs:
+        url = '%s/v2/workspaces/%s/deployments/%s/logs' % (self.__host, workspace_id, deployment_id)
+
+        logs_response = requests.get(
+            url, headers=self.__get_auth_header(AuthType.ALL))
+
+        if not self.__request_is_successful(logs_response):
+            raise Exception('Failed to get logs.')
+        logs = parse_obj_as(PredictionLogs, logs_response.json())
+        return logs
 
     def validate(self, workspace_id: str, deployment_id: str, log_id: str, validation_input: dict, explanation: str = None) -> None:
         url = "%s/v2/workspaces/%s/deployments/%s/logs/%s/validations" % (self.__host, workspace_id, deployment_id, log_id)

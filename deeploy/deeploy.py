@@ -10,7 +10,7 @@ import requests
 from pydantic import BaseModel, parse_obj_as
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
-from deeploy.models import ClientConfig, Deployment, CreateDeployment, DeployOptions, V1Prediction, V2Prediction, ModelReferenceJson
+from deeploy.models import ClientConfig, Deployment, CreateDeployment, DeployOptions, V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, PredictionLogs
 from deeploy.enums import ExplainerType
 from deeploy.common import delete_all_contents_in_directory, directory_exists, directory_empty, file_exists
 
@@ -175,6 +175,26 @@ class Client(object):
         explanation = self.__deeploy_service.explain(workspace_id, deployment_id, request_body, image)
         return explanation
 
+    def getLogs(self, deployment_id: str) -> PredictionLogs:
+        """Retrieve logs
+        Parameters: 
+            deployment_id (str): ID of the Deeploy deployment
+        """
+        workspace_id = self.__config.workspace_id
+        logs = self.__deeploy_service.getLogs(workspace_id, deployment_id)
+        return logs
+
+
+    def getOneLog(self, deployment_id: str, log_id: str) -> PredictionLog:
+        """Retrieve one log
+        Parameters:
+            deployment_id (str): ID of the Deeploy deployment
+            log_id (str): ID of the log to be retrieved
+        """
+        workspace_id = self.__config.workspace_id
+        log = self.__deeploy_service.getOneLog(workspace_id, deployment_id, log_id)
+        return log
+    
     def validate(self, deployment_id: str, log_id: str, validation_input: dict, explanation: str = None) -> None:
         """Validate a log
         Parameters:
