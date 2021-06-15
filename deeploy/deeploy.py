@@ -3,7 +3,9 @@ from typing import Any
 import os
 import shutil
 import uuid
-import json
+import json 
+import requests
+
 
 from pydantic import BaseModel, parse_obj_as
 
@@ -20,21 +22,23 @@ class Client(object):
 
     __config: ClientConfig
 
-    def __init__(self, access_key: str, secret_key: str, host: str, workspace_id: str,
-                 branch_name: str = None) -> None:
+    def __init__(self, host: str, workspace_id: str, access_key: str = None, secret_key: str = None, token: str = None,  
+                 branch_name: str=None) -> None:
         """Initialise the Deeploy client
         Parameters:
-            access_key (str): Personal Access Key generated from the Deeploy UI
-            secret_key (str): Secret Access Key generated from the Deeploy UI
             host (str): The host at which Deeploy is located, i.e. deeploy.example.com
             workspace_id (str): The ID of the workspace in which your repository 
                 is located
+            access_key (str): Personal Access Key generated from the Deeploy UI
+            secret_key (str): Secret Access Key generated from the Deeploy UI
+            token (str): Deployment token generated from the Deeploy UI
             branch_name (str, optional): The banchname on which to commit new models. 
                 Defaults to the current branchname.
         """
         self.__config = ClientConfig(**{
             'access_key': access_key,
             'secret_key': secret_key,
+            'token': token,
             'host': host,
             'workspace_id': workspace_id,
             'branch_name': branch_name,
@@ -42,13 +46,15 @@ class Client(object):
         })
 
         self.__deeploy_service = DeeployService(
+            host,
+            workspace_id,
             access_key,
             secret_key,
-            host
+            token,
         )
 
-        if not self.__are_clientoptions_valid(self.__config):
-            raise Exception('Client options not valid')
+        #if not self.__are_clientoptions_valid(self.__config):
+            #raise Exception('Client options not valid')
 
         return
 
@@ -66,6 +72,11 @@ class Client(object):
                 folders in the git folder. Defaults to False
             commit_message (str, optional): Commit message to use
         """
+        if not (self.__access_key and self.__secret_key):
+            raise Exception('Missing access credentials to create deployment.')
+        elif not self.__keys_are_valid:
+            raise Exception('Access credentials are not valid.')
+
         git_service = GitService(local_repository_path)
 
         repository_in_workspace, repository_id = self.__is_git_repository_in_workspace(git_service)
@@ -97,7 +108,7 @@ class Client(object):
         commit_message = '[Deeploy Client] Add new model'
 
         metadata_path = './metadata.json'
-        self.__prepare_metadata_file(git_service, metadata_path, overwrite)
+        self.__prepare_metadata_file(git_service, metadata_path, options.feature_labels, overwrite)
         git_service.add_folder_to_staging(metadata_path)
 
         if explainer:
@@ -227,10 +238,13 @@ class Client(object):
             pass
         return
 
-    def __prepare_metadata_file(self, git_service: GitService, path: str, overwrite=False) -> None:
+    def __prepare_metadata_file(self, git_service: GitService, path: str, featureLabels=None, overwrite=False) -> None:
         data = {
             'featureLabels': []
         }
+
+        if featureLabels:
+            data['featureLabels'] = featureLabels
 
         if file_exists(path) and not overwrite:
             raise Exception(

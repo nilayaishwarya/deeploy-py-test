@@ -3,11 +3,14 @@ import logging
 from typing import Optional, List, Any
 import os
 
-import requests
+import requests, base64
 from pydantic import parse_obj_as
+from requests import auth
+from requests.api import request
+from requests.auth import HTTPBasicAuth
 
 from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, V1Prediction, V2Prediction
-from deeploy.enums import ModelType, ExplainerType, PredictionVersion
+from deeploy.enums import ModelType, ExplainerType, PredictionVersion, AuthType
 
 
 class DeeployService(object):
@@ -15,13 +18,18 @@ class DeeployService(object):
     A class for interacting with the Deeploy API
     """
 
-    def __init__(self, access_key: str, secret_key: str, host: str, insecure=False) -> None:
+    def __init__(self, host: str, workspace_id: str, access_key: str=None, secret_key: str=None, token: str=None, insecure=False) -> None:
         self.__access_key = access_key
         self.__secret_key = secret_key
+        self.__token = token
+        self.__workspace_id = workspace_id
         self.__host = 'http://api.%s' % host if insecure else 'https://api.%s' % host
 
-        if not self.__keys_are_valid():
-            raise Exception('Access keys are not valid')
+        if (access_key and secret_key) or token:
+            if (access_key and secret_key) and not self.__keys_are_valid():
+                raise Exception('Access keys are not valid.')
+        else:
+            raise Exception('Missing authentication data.')
         return
 
     def get_repositories(self, workspace_id: str) -> List[Repository]:
@@ -91,10 +99,9 @@ class DeeployService(object):
 
     def predict(self, workspace_id: str, deployment_id: str, request_body: dict) -> V1Prediction or V2Prediction:
         url = '%s/v2/workspaces/%s/deployments/%s/predict' % (self.__host, workspace_id, deployment_id)
+        
+        prediction_response = requests.post(url, json=request_body, headers=self.__get_auth_header(AuthType.ALL))
 
-        prediction_response = requests.post(
-            url, json=request_body, auth=(self.__access_key, self.__secret_key))
-            
         if not self.__request_is_successful(prediction_response):
             raise Exception('Failed to call predictive model.')
         prediction = self.__parse_prediction(prediction_response)
@@ -107,11 +114,11 @@ class DeeployService(object):
             'image': str(image).lower(),
         }
 
-        explanation_reponse = requests.post(
-            url, json=request_body, params=params, auth=(self.__access_key, self.__secret_key))
-        if not self.__request_is_successful(explanation_reponse):
+        explanation_response = requests.post(url, json=request_body, params=params, headers=self.__get_auth_header(AuthType.ALL))
+
+        if not self.__request_is_successful(explanation_response):
             raise Exception('Failed to call explainer model.')
-        explanation = explanation_reponse.json()
+        explanation = explanation_response.json()
         return explanation
 
     def __keys_are_valid(self) -> bool:
@@ -119,6 +126,15 @@ class DeeployService(object):
         workspaces_response = requests.get(
             host_for_testing, auth=(self.__access_key, self.__secret_key))
         if self.__request_is_successful(workspaces_response):
+            return True
+        return False
+
+    def __token_is_valid(self, workspace_id, deployment_id) -> bool:
+        host_for_testing = '%s/v2/workspaces/%s/deployments/%s/logs' % (self.__host, workspace_id, deployment_id)
+        headers = {'Authorization': 'Bearer ' + self.__token}
+        logs_response = requests.get(
+            host_for_testing, headers=headers)
+        if self.__request_is_successful(logs_response):
             return True
         return False
 
@@ -141,3 +157,19 @@ class DeeployService(object):
             prediction = parse_obj_as(
                 V2Prediction, prediction_response.json())
         return prediction
+
+    def __get_auth_header(self, supported_auth: AuthType):
+        if (self.__access_key and self.__secret_key) and (supported_auth==AuthType.BASIC or supported_auth==AuthType.ALL):
+            credentials = self.__access_key + ":" + self.__secret_key
+            b64Val = base64.b64encode(credentials.encode()).decode()
+            header={'Authorization': 'Basic %s' % b64Val}
+        elif (self.__token) and (supported_auth==AuthType.TOKEN or supported_auth==AuthType.ALL):
+            header = {'Authorization': 'Bearer ' + self.__token}
+        elif (self.__access_key and self.__secret_key) and not (supported_auth==AuthType.BASIC or supported_auth==AuthType.ALL):
+            raise Exception('This function currently does not support Basic authentication.')
+        else:
+            raise Exception('This function currently does not support Token authentication.')
+
+        return header
+            
+
