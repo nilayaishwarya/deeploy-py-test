@@ -10,19 +10,19 @@ WORKSPACE_ID = 'abc'
 def test__init(deeploy_service):
     with requests_mock.Mocker() as m:
         m.get('https://api.test.deeploy.ml/v2/workspaces')
-        assert DeeployService(access_key='abc', secret_key='def', host='test.deeploy.ml')
+        assert DeeployService(host='test.deeploy.ml', workspace_id='ghi', access_key='abc', secret_key='def')
 
     with requests_mock.Mocker() as m:
         m.get('https://api.test.deeploy.ml/v2/workspaces', status_code=401)
         with pytest.raises(Exception):
-            DeeployService(access_key='abc', secret_key='def', host='test.deeploy.ml')
+            DeeployService(host='test.deeploy.ml', workspace_id='ghi', access_key='abc', secret_key='def')
 
 
 @pytest.fixture(scope="session")
 def deeploy_service():
     with requests_mock.Mocker() as m:
         m.get('https://api.test.deeploy.ml/v2/workspaces')
-        return DeeployService(access_key='abc', secret_key='def', host='test.deeploy.ml')
+        return DeeployService(host='test.deeploy.ml', workspace_id='ghi', access_key='abc', secret_key='def')
 
 
 def test__get_repositories(deeploy_service):

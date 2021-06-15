@@ -15,6 +15,7 @@ class DeployOptions(BaseModel):
         description (str, optional): the description of the deployment
         example_input (List, optional): list of example input parameters for the model
         example_output (List, optional): list of example output for the model
+        feature_labels (List, optional): list of feature labels for the explanations
         pytorch_model_file_path (str, optional): absolute or relative path to the .py file 
             containing the pytorch model class definition
         pytorch_torchserve_handler_name (str, optional): TorchServe handler name. One of 
@@ -28,5 +29,6 @@ class DeployOptions(BaseModel):
     description: Optional[str]
     example_input: Optional[List[Any]]
     example_output: Optional[List[Any]]
+    feature_labels: Optional[List[str]]
     pytorch_model_file_path: Optional[str]
     pytorch_torchserve_handler_name: Optional[str]
