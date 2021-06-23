@@ -1,3 +1,2 @@
-from .deeploy import Client
-
-from .models import CreateDeployment, DeployOptions
+from .deeploy import Client # noqa
+from .models import CreateDeployment, DeployOptions # noqa

@@ -2,6 +2,7 @@ from typing import Any
 
 from deeploy.enums import ModelType
 
+
 class BaseModel:
 
     def __init__(self, model_object: Any, **kwargs) -> None:

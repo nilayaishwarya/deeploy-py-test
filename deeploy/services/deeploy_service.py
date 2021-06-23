@@ -1,24 +1,22 @@
 import base64
-import logging
-from typing import Optional, List, Any
-import os
+from typing import List
 
-import requests, base64
+import requests
 from pydantic import parse_obj_as
-from requests import auth
-from requests.api import request
-from requests.auth import HTTPBasicAuth
 
-from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, V1Prediction, V2Prediction, PredictionLog, PredictionLogs
-from deeploy.enums import ModelType, ExplainerType, PredictionVersion, AuthType
+from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, \
+    V1Prediction, V2Prediction, PredictionLog, PredictionLogs
+from deeploy.enums import PredictionVersion, AuthType
 
 
 class DeeployService(object):
-    """ 
+    """
     A class for interacting with the Deeploy API
     """
 
-    def __init__(self, host: str, workspace_id: str, access_key: str=None, secret_key: str=None, token: str=None, insecure=False) -> None:
+    def __init__(
+            self, host: str, workspace_id: str, access_key: str = None, secret_key: str = None,
+            token: str = None, insecure=False) -> None:
         self.__access_key = access_key
         self.__secret_key = secret_key
         self.__token = token
@@ -67,7 +65,7 @@ class DeeployService(object):
         deployment_response = requests.post(
             url, json=data, auth=(self.__access_key, self.__secret_key))
         if not self.__request_is_successful(deployment_response):
-            raise Exception('Failed to create the deployment: %s' % str(deployment_response.json()) )
+            raise Exception('Failed to create the deployment: %s' % str(deployment_response.json()))
 
         deployment = parse_obj_as(
             Deployment, deployment_response.json())
@@ -86,57 +84,65 @@ class DeeployService(object):
 
         return workspace
 
-    def upload_blob_file(self, local_file_path: str, relative_folder_path: str, workspace_id: str, repository_id: str, uuid: str) -> str:
-        url = '%s/v2/workspaces/%s/repositories/%s/upload' % (self.__host, workspace_id, repository_id)
+    def upload_blob_file(
+            self, local_file_path: str, relative_folder_path: str, workspace_id: str,
+            repository_id: str, uuid: str) -> str:
+        url = '%s/v2/workspaces/%s/repositories/%s/upload' % (
+            self.__host, workspace_id, repository_id)
         params = {
             'commitSha': uuid,
             'folderPath': relative_folder_path,
         }
-        files = { 'file': open(local_file_path, 'rb') }
-        r = requests.post(url, files=files, params=params, auth=(self.__access_key, self.__secret_key))
+        files = {'file': open(local_file_path, 'rb')}
+        r = requests.post(url, files=files, params=params,
+                          auth=(self.__access_key, self.__secret_key))
         blob_storage_path = r.json()['data']['referencePath']
         return blob_storage_path
 
-    def predict(self, workspace_id: str, deployment_id: str, request_body: dict) -> V1Prediction or V2Prediction:
-        url = '%s/v2/workspaces/%s/deployments/%s/predict' % (self.__host, workspace_id, deployment_id)
-        
-        prediction_response = requests.post(url, json=request_body, headers=self.__get_auth_header(AuthType.ALL))
+    def predict(self, workspace_id: str, deployment_id: str,
+                request_body: dict) -> V1Prediction or V2Prediction:
+        url = '%s/v2/workspaces/%s/deployments/%s/predict' % (
+            self.__host, workspace_id, deployment_id)
+
+        prediction_response = requests.post(
+            url, json=request_body, headers=self.__get_auth_header(AuthType.ALL))
 
         if not self.__request_is_successful(prediction_response):
             raise Exception('Failed to call predictive model.')
         prediction = self.__parse_prediction(prediction_response)
         return prediction
 
-
-    def explain(self, workspace_id: str, deployment_id: str, request_body: dict, image: bool = False) -> object:
-        url = '%s/v2/workspaces/%s/deployments/%s/explain' % (self.__host, workspace_id, deployment_id)
+    def explain(self, workspace_id: str, deployment_id: str, request_body: dict,
+                image: bool = False) -> object:
+        url = '%s/v2/workspaces/%s/deployments/%s/explain' % (
+            self.__host, workspace_id, deployment_id)
         params = {
             'image': str(image).lower(),
         }
 
-        explanation_response = requests.post(url, json=request_body, params=params, headers=self.__get_auth_header(AuthType.ALL))
+        explanation_response = requests.post(
+            url, json=request_body, params=params, headers=self.__get_auth_header(AuthType.ALL))
 
         if not self.__request_is_successful(explanation_response):
             raise Exception('Failed to call explainer model.')
         explanation = explanation_response.json()
         return explanation
-        
 
     def getOneLog(self, workspace_id: str, deployment_id: str, log_id: str) -> PredictionLog:
-        url = '%s/v2/workspaces/%s/deployments/%s/logs/%s' % (self.__host, workspace_id, deployment_id, log_id)
+        url = '%s/v2/workspaces/%s/deployments/%s/logs/%s' % (
+            self.__host, workspace_id, deployment_id, log_id)
         params = {
             'logId': log_id
         }
-        
+
         log_response = requests.get(
-                url, params=params, headers=self.__get_auth_header(AuthType.ALL))
+            url, params=params, headers=self.__get_auth_header(AuthType.ALL))
 
         if not self.__request_is_successful(log_response):
             raise Exception('Failed to get log %s.' % log_id)
         print(log_response.json())
         log = parse_obj_as(PredictionLog, log_response.json())
         return log
-
 
     def getLogs(self, workspace_id: str, deployment_id: str) -> PredictionLogs:
         url = '%s/v2/workspaces/%s/deployments/%s/logs' % (self.__host, workspace_id, deployment_id)
@@ -149,10 +155,15 @@ class DeeployService(object):
         logs = parse_obj_as(PredictionLogs, logs_response.json())
         return logs
 
-    def validate(self, workspace_id: str, deployment_id: str, log_id: str, validation_input: dict, explanation: str = None) -> None:
-        url = "%s/v2/workspaces/%s/deployments/%s/logs/%s/validations" % (self.__host, workspace_id, deployment_id, log_id)
+    def validate(self, workspace_id: str, deployment_id: str, log_id: str, validation_input: dict,
+                 explanation: str = None) -> None:
+        url = "%s/v2/workspaces/%s/deployments/%s/logs/%s/validations" % (
+            self.__host, workspace_id, deployment_id, log_id)
 
-        validation_response = requests.post(url, json=validation_input, headers=self.__get_auth_header(AuthType.ALL), params=explanation)
+        validation_response = requests.post(
+            url, json=validation_input,
+            headers=self.__get_auth_header(AuthType.ALL),
+            params=explanation)
         if not self.__request_is_successful(validation_response):
             if validation_response.status_code == 409:
                 raise Exception('Log has already been validated.')
@@ -168,7 +179,8 @@ class DeeployService(object):
         return False
 
     def __token_is_valid(self, workspace_id, deployment_id) -> bool:
-        host_for_testing = '%s/v2/workspaces/%s/deployments/%s/logs' % (self.__host, workspace_id, deployment_id)
+        host_for_testing = '%s/v2/workspaces/%s/deployments/%s/logs' % (
+            self.__host, workspace_id, deployment_id)
         headers = {'Authorization': 'Bearer ' + self.__token}
         logs_response = requests.get(
             host_for_testing, headers=headers)
@@ -183,13 +195,13 @@ class DeeployService(object):
 
     def __check_prediction_version(self, prediction_response: dict) -> PredictionVersion:
         if 'predictions' in prediction_response.json():
-             return PredictionVersion.V1
+            return PredictionVersion.V1
         else:
             return PredictionVersion.V2
 
     def __parse_prediction(self, prediction_response: dict) -> V1Prediction or V2Prediction:
         if self.__check_prediction_version(prediction_response) == PredictionVersion.V1:
-             prediction = parse_obj_as(
+            prediction = parse_obj_as(
                 V1Prediction, prediction_response.json())
         else:
             prediction = parse_obj_as(
@@ -197,17 +209,18 @@ class DeeployService(object):
         return prediction
 
     def __get_auth_header(self, supported_auth: AuthType):
-        if (self.__access_key and self.__secret_key) and (supported_auth==AuthType.BASIC or supported_auth==AuthType.ALL):
+        if (self.__access_key and self.__secret_key) and \
+                (supported_auth == AuthType.BASIC or supported_auth == AuthType.ALL):
             credentials = self.__access_key + ":" + self.__secret_key
             b64Val = base64.b64encode(credentials.encode()).decode()
-            header={'Authorization': 'Basic %s' % b64Val}
-        elif (self.__token) and (supported_auth==AuthType.TOKEN or supported_auth==AuthType.ALL):
+            header = {'Authorization': 'Basic %s' % b64Val}
+        elif (self.__token) and \
+                (supported_auth == AuthType.TOKEN or supported_auth == AuthType.ALL):
             header = {'Authorization': 'Bearer ' + self.__token}
-        elif (self.__access_key and self.__secret_key) and not (supported_auth==AuthType.BASIC or supported_auth==AuthType.ALL):
+        elif (self.__access_key and self.__secret_key) and \
+                not (supported_auth == AuthType.BASIC or supported_auth == AuthType.ALL):
             raise Exception('This function currently does not support Basic authentication.')
         else:
             raise Exception('This function currently does not support Token authentication.')
 
         return header
-            
-

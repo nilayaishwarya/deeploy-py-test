@@ -1,1 +1,1 @@
-from .pytorch import PYTORCH_CONFIG_FILE
+from .pytorch import PYTORCH_CONFIG_FILE # noqa

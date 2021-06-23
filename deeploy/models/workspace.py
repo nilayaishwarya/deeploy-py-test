@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
-from deeploy.common import to_lower_camel
+from deeploy.common.functions import to_lower_camel
 
 
 class Workspace(BaseModel):

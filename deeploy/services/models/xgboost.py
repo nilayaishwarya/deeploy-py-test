@@ -2,7 +2,6 @@ from typing import Any
 from os.path import join
 
 from xgboost import XGBClassifier, Booster
-from joblib import dump
 
 from . import BaseModel
 from deeploy.enums import ModelType
@@ -15,7 +14,7 @@ class XGBoostModel(BaseModel):
     def __init__(self, model_object: Any, **kwargs) -> None:
 
         if not issubclass(type(model_object), XGBClassifier) and \
-            not issubclass(type(model_object), Booster):
+                not issubclass(type(model_object), Booster):
             raise Exception('Not a valid XGBoost class')
 
         self.__xgboost_model = model_object

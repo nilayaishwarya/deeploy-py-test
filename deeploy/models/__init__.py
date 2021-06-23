@@ -1,18 +1,10 @@
-from .deployment import Deployment
-from .repository import Repository
-
-from .client_options import ClientConfig
-
-from .create_deployment import CreateDeployment
-
-from .workspace import Workspace
-
-from .deploy_options import DeployOptions
-
-from .prediction import V1Prediction, V2Prediction
-
-from .prediction_log import PredictionLog
-
-from .prediction_logs import PredictionLogs
-
-from .model_reference_json import ModelReferenceJson
+from .deployment import Deployment # noqa
+from .repository import Repository # noqa
+from .client_options import ClientConfig # noqa
+from .create_deployment import CreateDeployment # noqa
+from .workspace import Workspace # noqa
+from .deploy_options import DeployOptions # noqa
+from .prediction import V1Prediction, V2Prediction # noqa
+from .prediction_log import PredictionLog # noqa
+from .prediction_logs import PredictionLogs # noqa
+from .model_reference_json import ModelReferenceJson # noqa

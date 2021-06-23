@@ -20,9 +20,9 @@ class DeployOptions(BaseModel):
             containing the pytorch model class definition
         pytorch_torchserve_handler_name (str, optional): TorchServe handler name. One of 
             ['image_classifier', 'image_classifier', 'object_detector', 'text_classifier']. 
-            See the (TorchServe documentation)[https://github.com/pytorch/serve/blob/master/docs/default_handlers.md#torchserve-default-inference-handlers] 
+            See the (TorchServe documentation)[https://github.com/pytorch/serve/blob/master/docs/default_handlers.md#torchserve-default-inference-handlers]
             for more info.
-    """
+    """ # noqa
     name: str
     model_serverless = False
     explainer_serverless = False

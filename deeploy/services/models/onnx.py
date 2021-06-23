@@ -1,5 +1,3 @@
-from onnx import ModelProto
-
 from . import BaseModel
 from deeploy.enums import ModelType
 
