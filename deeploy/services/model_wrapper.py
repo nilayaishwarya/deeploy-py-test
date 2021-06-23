@@ -68,7 +68,8 @@ class ModelWrapper:
             return ONNXModel(model_object, **kwargs)
 
     def __is_sklearn(self, base_classes: List[str]) -> bool:
-        return 'sklearn.base.BaseEstimator' in base_classes and not 'xgboost.sklearn.XGBModel' in base_classes
+        return 'sklearn.base.BaseEstimator' in base_classes and \
+               'xgboost.sklearn.XGBModel' not in base_classes
 
     def __is_xgboost(self, base_classes: List[str]) -> bool:
         return 'xgboost.sklearn.XGBModel' in base_classes or 'xgboost.core.Booster' in base_classes

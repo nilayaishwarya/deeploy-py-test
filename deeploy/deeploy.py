@@ -3,36 +3,38 @@ from typing import Any
 import os
 import shutil
 import uuid
-import json 
-import requests
+import json
 
 
-from pydantic import BaseModel, parse_obj_as
+from pydantic import parse_obj_as
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
-from deeploy.models import ClientConfig, Deployment, CreateDeployment, DeployOptions, V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, PredictionLogs
+from deeploy.models import ClientConfig, Deployment, CreateDeployment, DeployOptions, \
+    V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, PredictionLogs
 from deeploy.enums import ExplainerType
-from deeploy.common import delete_all_contents_in_directory, directory_exists, directory_empty, file_exists
+from deeploy.common.functions import delete_all_contents_in_directory, directory_exists, \
+    directory_empty, file_exists
 
 
 class Client(object):
-    """ 
+    """
     A class for interacting with Deeploy
     """
 
     __config: ClientConfig
 
-    def __init__(self, host: str, workspace_id: str, access_key: str = None, secret_key: str = None, token: str = None,  
-                 branch_name: str=None) -> None:
+    def __init__(
+            self, host: str, workspace_id: str, access_key: str = None, secret_key: str = None,
+            token: str = None, branch_name: str = None) -> None:
         """Initialise the Deeploy client
         Parameters:
             host (str): The host at which Deeploy is located, i.e. deeploy.example.com
-            workspace_id (str): The ID of the workspace in which your repository 
+            workspace_id (str): The ID of the workspace in which your repository
                 is located
             access_key (str): Personal Access Key generated from the Deeploy UI
             secret_key (str): Secret Access Key generated from the Deeploy UI
             token (str): Deployment token generated from the Deeploy UI
-            branch_name (str, optional): The banchname on which to commit new models. 
+            branch_name (str, optional): The banchname on which to commit new models.
                 Defaults to the current branchname.
         """
         self.__config = ClientConfig(**{
@@ -53,23 +55,21 @@ class Client(object):
             token,
         )
 
-        #if not self.__are_clientoptions_valid(self.__config):
-            #raise Exception('Client options not valid')
-
         return
 
-    def deploy(self, model: Any, options: DeployOptions, local_repository_path: str, explainer: Any = None, overwrite: bool = False,
+    def deploy(self, model: Any, options: DeployOptions, local_repository_path: str,
+               explainer: Any = None, overwrite: bool = False,
                commit_message: str = None) -> Deployment:
         """Deploy a model on Deeploy
         Parameters:
             model (Any): The class instance of an ML model
-            options (DeployOptions): An instance of the deploy options class 
+            options (DeployOptions): An instance of the deploy options class
                 containing the deployment options
-            local_repository_path (str): Absolute path to the local git repository 
+            local_repository_path (str): Absolute path to the local git repository
                 which is connected to Deeploy
             explainer (Any, optional): The class instance of an optional model explainer
-            overwrite (bool, optional): Whether or not to overwrite files that are in the 'model' and 'explainer' 
-                folders in the git folder. Defaults to False
+            overwrite (bool, optional): Whether or not to overwrite files that are in the
+                'model' and 'explainer' folders in the git folder. Defaults to False
             commit_message (str, optional): Commit message to use
         """
         if not (self.__access_key and self.__secret_key):
@@ -83,7 +83,8 @@ class Client(object):
 
         if not repository_in_workspace:
             raise Exception(
-                'Repository was not found in the Deeploy workspace. Make sure you have connected it before')
+                'Repository was not found in the Deeploy workspace. \
+                 Make sure you have connected it before')
         else:
             self.__config.repository_id = repository_id
 
@@ -92,14 +93,14 @@ class Client(object):
         logging.info('Successfully pulled from the remote repository.')
 
         logging.info('Saving the model to disk...')
-        model_wrapper = ModelWrapper(model, 
-            pytorch_model_file_path=options.pytorch_model_file_path, 
+        model_wrapper = ModelWrapper(
+            model,
+            pytorch_model_file_path=options.pytorch_model_file_path,
             pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
         self.__prepare_model_directory(git_service, local_repository_path, overwrite)
         model_folder = os.path.join(
             local_repository_path, 'model')
         model_wrapper.save(model_folder)
-        total_file_sizes_model = self.__get_upload_size(model_folder)
         blob_storage_link = self.__upload_folder_to_blob(local_repository_path, model_folder)
         shutil.rmtree(model_folder)
         os.mkdir(model_folder)
@@ -118,8 +119,8 @@ class Client(object):
             explainer_folder = os.path.join(
                 local_repository_path, 'explainer')
             explainer_wrapper.save(explainer_folder)
-            total_file_sizes_explainer = self.__get_upload_size(explainer_folder)
-            blob_storage_link = self.__upload_folder_to_blob(local_repository_path, explainer_folder)
+            blob_storage_link = self.__upload_folder_to_blob(
+                local_repository_path, explainer_folder)
             shutil.rmtree(explainer_folder)
             os.mkdir(explainer_folder)
             self.__create_reference_file(explainer_folder, blob_storage_link)
@@ -172,18 +173,18 @@ class Client(object):
             image (bool): Return image or not
         """
         workspace_id = self.__config.workspace_id
-        explanation = self.__deeploy_service.explain(workspace_id, deployment_id, request_body, image)
+        explanation = self.__deeploy_service.explain(
+            workspace_id, deployment_id, request_body, image)
         return explanation
 
     def getLogs(self, deployment_id: str) -> PredictionLogs:
         """Retrieve logs
-        Parameters: 
+        Parameters:
             deployment_id (str): ID of the Deeploy deployment
         """
         workspace_id = self.__config.workspace_id
         logs = self.__deeploy_service.getLogs(workspace_id, deployment_id)
         return logs
-
 
     def getOneLog(self, deployment_id: str, log_id: str) -> PredictionLog:
         """Retrieve one log
@@ -194,8 +195,9 @@ class Client(object):
         workspace_id = self.__config.workspace_id
         log = self.__deeploy_service.getOneLog(workspace_id, deployment_id, log_id)
         return log
-    
-    def validate(self, deployment_id: str, log_id: str, validation_input: dict, explanation: str = None) -> None:
+
+    def validate(self, deployment_id: str, log_id: str, validation_input: dict,
+                 explanation: str = None) -> None:
         """Validate a log
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
@@ -204,7 +206,8 @@ class Client(object):
             explanation: Optional explanation of the validation
         """
         workspace_id = self.__config.workspace_id
-        self.__deeploy_service.validate(workspace_id, deployment_id, log_id, validation_input, explanation)
+        self.__deeploy_service.validate(workspace_id, deployment_id,
+                                        log_id, validation_input, explanation)
 
     def __are_clientoptions_valid(self, config: ClientConfig) -> bool:
         """Check if the supplied options are valid
@@ -230,8 +233,8 @@ class Client(object):
 
         return False, None
 
-    def __prepare_model_directory(self, git_service: GitService, local_repository_path: str, 
-        overwrite=False) -> None:
+    def __prepare_model_directory(self, git_service: GitService, local_repository_path: str,
+                                  overwrite=False) -> None:
         model_folder_path = os.path.join(
             local_repository_path, 'model')
         if not directory_exists(model_folder_path):
@@ -243,14 +246,16 @@ class Client(object):
         elif not directory_empty(model_folder_path):
             if not overwrite:
                 raise Exception(
-                    'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' % model_folder_path)
+                    'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' %
+                    model_folder_path)
             delete_all_contents_in_directory(model_folder_path)
             git_service.delete_folder_from_staging('model')
         else:  # folder exists and empty
             pass
         return
 
-    def __prepare_explainer_directory(self, git_service: GitService, local_repository_path: str, overwrite=False) -> None:
+    def __prepare_explainer_directory(self, git_service: GitService, local_repository_path: str,
+                                      overwrite=False) -> None:
         explainer_folder_path = os.path.join(
             local_repository_path, 'explainer')
         if not directory_exists(explainer_folder_path):
@@ -262,14 +267,16 @@ class Client(object):
         elif not directory_empty(explainer_folder_path):
             if not overwrite:
                 raise Exception(
-                    'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' % explainer_folder_path)
+                    'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' %
+                    explainer_folder_path)
             delete_all_contents_in_directory(explainer_folder_path)
             git_service.delete_folder_from_staging('explainer')
         else:  # folder exists and empty
             pass
         return
 
-    def __prepare_metadata_file(self, git_service: GitService, path: str, featureLabels=None, overwrite=False) -> None:
+    def __prepare_metadata_file(self, git_service: GitService, path: str, featureLabels=None,
+                                overwrite=False) -> None:
         data = {
             'featureLabels': []
         }
@@ -279,14 +286,14 @@ class Client(object):
 
         if file_exists(path) and not overwrite:
             raise Exception(
-                    'The file %s already exists. Pass \'overwrite=True\' to overwrite contents.' % path)
+                'The file %s already exists. Pass \'overwrite=True\' to overwrite contents.' % path)
         else:
             try:
                 with open(path, 'w') as f:
                     json.dump(data, f)
             except OSError:
                 logging.error("Creation of the file %s failed" % path)
-            
+
     def __get_upload_size(self, local_folder_path: str) -> int:
         total_file_sizes = 0
         for root, _, files in os.walk(local_folder_path):
@@ -302,18 +309,23 @@ class Client(object):
         relative_folder_path = os.path.relpath(local_folder_path, local_repository_path)
         for root, _, files in os.walk(local_folder_path):
             for single_file in files:
-                relative_file_path = os.path.join(relative_folder_path, os.path.relpath(root, local_folder_path))
+                relative_file_path = os.path.join(
+                    relative_folder_path, os.path.relpath(root, local_folder_path))
                 file_path = os.path.join(root, single_file)
-                blob_file_location = self.__deeploy_service.upload_blob_file(file_path, relative_file_path, \
-                    self.__config.workspace_id, self.__config.repository_id, blob_folder_uuid)
+                blob_file_location = self.__deeploy_service.upload_blob_file(
+                    file_path,
+                    relative_file_path,
+                    self.__config.workspace_id,
+                    self.__config.repository_id,
+                    blob_folder_uuid)
                 upload_locations.append(blob_file_location)
 
         partition = upload_locations[0].partition(relative_folder_path)
         blob_folder_path = partition[0] + partition[1]
         return blob_folder_path
-    
-    def __create_reference_file(self, local_folder_path: str, blob_storage_link: str = None, 
-        docker_image: str = None, docker_image_port: int = None) -> None:
+
+    def __create_reference_file(self, local_folder_path: str, blob_storage_link: str = None,
+                                docker_image: str = None, docker_image_port: int = None) -> None:
         file_path = os.path.join(local_folder_path, 'reference.json')
 
         reference_json = {

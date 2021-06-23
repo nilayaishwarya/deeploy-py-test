@@ -29,7 +29,7 @@ class AlibiExplainer(BaseExplainer):
     def get_explainer_type(self) -> ExplainerType:
         base_classes = list(map(lambda x: x.__module__ + '.' +
                                 x.__name__, inspect.getmro(type(self.__alibi_explainer))))
-                                
+
         if 'alibi.explainers.anchor_text.AnchorText' in base_classes:
             return ExplainerType.ANCHOR_TEXT
         if 'alibi.explainers.anchor_image.AnchorImage' in base_classes:

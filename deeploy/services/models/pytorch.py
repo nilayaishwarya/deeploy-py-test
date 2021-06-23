@@ -1,9 +1,6 @@
 from typing import Any
 from os.path import join, exists
 import os
-from shutil import copy, move
-import random
-import string
 import subprocess
 
 from torch.nn import Module
@@ -20,7 +17,8 @@ class PyTorchModel(BaseModel):
     __model_file_path: str
     __handler_file_path: str = None
 
-    def __init__(self, model_object: Any, pytorch_model_file_path: str, pytorch_torchserve_handler_name: str = 'image_classifier', **kwargs) -> None:
+    def __init__(self, model_object: Any, pytorch_model_file_path: str,
+                 pytorch_torchserve_handler_name: str = 'image_classifier', **kwargs) -> None:
 
         if not issubclass(type(model_object), Module):
             raise Exception('Not a valid PyTorch class')
@@ -28,17 +26,14 @@ class PyTorchModel(BaseModel):
         if not exists(pytorch_model_file_path):
             raise Exception('The Pytorch model file does not exist')
 
-        if handler_file_path:
-            if not exists(pytorch_model_file_path):
-                raise Exception('The Pytorch model file does not exist')
-
-        if not (pytorch_model_file_path.endswith('.py') or pytorch_model_file_path.endswith('.ipynb')):
+        if not (pytorch_model_file_path.endswith('.py') or
+                pytorch_model_file_path.endswith('.ipynb')):
             raise Exception(
                 'The Pytorch model file is not a supported file type. Use .py or .ipynb')
 
         self.__pytorch_model = model_object
         self.__model_file_path = pytorch_model_file_path
-        self.__handler_name = handler_name
+        self.__handler_name = pytorch_torchserve_handler_name
         return
 
     def save(self, local_folder_path: str) -> None:
@@ -46,7 +41,6 @@ class PyTorchModel(BaseModel):
         mar_folder_path = join(local_folder_path, 'model-store')
         save(self.__pytorch_model.state_dict(), serialized_model_path)
 
-        # torch-model-archiver --model-name densenet161 --version 1.0 --model-file examples/image_classifier/densenet_161/model.py --serialized-file densenet161-8d451a50.pth --extra-files examples/image_classifier/index_to_name.json --handler image_classifier
         mar_command = "torch-model-archiver --model-name model --version 1.0 --serialized-file %s \
             --export-path %s" % (serialized_model_path, mar_folder_path)
 
@@ -80,7 +74,7 @@ class PyTorchModel(BaseModel):
         config_folder_path = join(local_folder_path, 'config')
         if not os.path.exists(config_folder_path):
             os.makedirs(config_folder_path)
-        
+
         config_file_path = join(config_folder_path, 'config.properties')
         with open(config_file_path, "w+") as config_file:
             config_file.write(PYTORCH_CONFIG_FILE)

@@ -2,8 +2,7 @@ from typing import Optional, List, Any
 
 from pydantic import BaseModel
 
-from deeploy.common import to_lower_camel
-from deeploy.enums import ModelType, ExplainerType
+from deeploy.common.functions import to_lower_camel
 
 
 class Deployment(BaseModel):
@@ -31,9 +30,9 @@ class DeployOptions(BaseModel):
 
     Attributes:
       name: name of the deployment
-      model_serverless: boolean indicating whether to deploy the model in 
+      model_serverless: boolean indicating whether to deploy the model in
         a serverless fashion. Defaults to False
-      explainer_serverless: boolean indicating whether to deploy the model in 
+      explainer_serverless: boolean indicating whether to deploy the model in
         a serverless fashion. Defaults to False
       description: string with the description of the deployment
       example_input: list of example input parameters for the model

@@ -3,10 +3,20 @@ services:
   - docker:19.03.5-dind
 
 stages:
+  - lint
   - test
   - build
   - release
   - deploy
+
+lint_python:
+  image:
+    name: registry.gitlab.com/deeploy-ml/deeploy-python-client/lint-python:0.1
+  stage: lint
+  script:
+    - pip3 install -e .
+    - flake8 ./deeploy
+  needs: []
 
 test_python:
   image:
@@ -15,6 +25,7 @@ test_python:
   script:
     - pip3 install -e .
     - python3 -m pytest .
+  needs: []
 
 build_python:
   image:

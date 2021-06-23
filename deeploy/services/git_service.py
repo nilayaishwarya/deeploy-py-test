@@ -1,10 +1,8 @@
-from typing import Optional
-
 from git import Repo, Remote
 
 
 class GitService(object):
-    """ 
+    """
     A class for interacting with a local Git project
     """
 
@@ -28,7 +26,7 @@ class GitService(object):
         """
         try:
             assert not self.repository.bare
-        except:
+        except Exception:
             return False
 
         return True
@@ -38,8 +36,8 @@ class GitService(object):
 
         Parameters
         ----------
-          relative_folder_path: str 
-            represents the relative path to the folder from the root of 
+          relative_folder_path: str
+            represents the relative path to the folder from the root of
             the git directory
         """
         self.repository.index.add([relative_folder_path])
