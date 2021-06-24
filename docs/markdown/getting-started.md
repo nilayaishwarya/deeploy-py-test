@@ -20,7 +20,6 @@ client_options = {
     'secret_key': 'examplesecretkey',
     'host': 'example.deeploy.ml',
     'workspace_id': 'e7942eeb-3e7e-4d27-a413-23f49a0f24f3',
-    'local_repository_path': '/Users/deeploy/Documents/my-ml-project',
 }
 client = Client(**client_options)
 ```
