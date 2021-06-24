@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Tuple
 import os
 import shutil
 import uuid
@@ -25,7 +25,7 @@ class Client(object):
 
     def __init__(
             self, host: str, workspace_id: str, access_key: str = None, secret_key: str = None,
-            token: str = None, branch_name: str = None) -> None:
+            deployment_token: str = None, branch_name: str = None) -> None:
         """Initialise the Deeploy client
         Parameters:
             host (str): The host at which Deeploy is located, i.e. deeploy.example.com
@@ -40,7 +40,7 @@ class Client(object):
         self.__config = ClientConfig(**{
             'access_key': access_key,
             'secret_key': secret_key,
-            'token': token,
+            'token': deployment_token,
             'host': host,
             'workspace_id': workspace_id,
             'branch_name': branch_name,
@@ -52,7 +52,7 @@ class Client(object):
             workspace_id,
             access_key,
             secret_key,
-            token,
+            deployment_token,
         )
 
         return
@@ -219,7 +219,7 @@ class Client(object):
 
         return True
 
-    def __is_git_repository_in_workspace(self, git_service: GitService) -> (bool, str):
+    def __is_git_repository_in_workspace(self, git_service: GitService) -> Tuple[bool, str]:
         remote_url = git_service.get_remote_url()
         workspace_id = self.__config.workspace_id
 

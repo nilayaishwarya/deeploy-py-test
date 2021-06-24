@@ -17,10 +17,9 @@
 Deeploy Python Client is a client for the Deeploy Core product and is aimed at the deployment of machine learning models and explainers. The focus of the library is to simplify deployment from your local python environment. 
 
 - [Getting started](./getting-started.md)
-    - [Installation](./getting-started.md#installation)
-    - [Deploying a model](./getting-started.md#deploying-a-model)
+  - [Installation](./getting-started.md#installation)
+  - [Deploying a model](./getting-started.md#deploying-a-model)
+- [Configuration](./configuration.md)
+  - [Authentication](./configuration.md#authentication)
 - [Examples](./examples.md)
 - [API Reference](./api-reference.md)
-
-
-
