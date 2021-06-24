@@ -37,6 +37,9 @@ class Client(object):
             branch_name (str, optional): The banchname on which to commit new models.
                 Defaults to the current branchname.
         """
+        self.__access_key = access_key
+        self.__secret_key = secret_key
+
         self.__config = ClientConfig(**{
             'access_key': access_key,
             'secret_key': secret_key,
@@ -74,8 +77,6 @@ class Client(object):
         """
         if not (self.__access_key and self.__secret_key):
             raise Exception('Missing access credentials to create deployment.')
-        elif not self.__keys_are_valid:
-            raise Exception('Access credentials are not valid.')
 
         git_service = GitService(local_repository_path)
 
