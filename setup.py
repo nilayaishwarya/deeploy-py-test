@@ -18,7 +18,7 @@ setuptools.setup(
         "Deeploy website": "https://deeploy.ml",
     },
     install_requires=[
-        "pydantic>=1.7.3",
+        "pydantic==1.8.2",
         "gitpython>=3.1.12",
         "requests>=2.26.0",
         "joblib>=1.0.1",
