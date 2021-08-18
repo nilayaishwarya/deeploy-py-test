@@ -20,10 +20,10 @@ setuptools.setup(
     install_requires=[
         "pydantic>=1.7.3",
         "gitpython>=3.1.12",
-        "requests>=2.25.1",
+        "requests>=2.26.0",
         "joblib>=1.0.1",
         "dill>=0.3.3",
-        "ipython>=7.20.0",
+        "ipython>=7.26.0",
         "nbconvert>=6.0.7",
         "torch-model-archiver==0.3.1",
     ],
