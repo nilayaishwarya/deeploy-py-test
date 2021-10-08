@@ -5,7 +5,7 @@ import requests
 from pydantic import parse_obj_as
 
 from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, \
-    V1Prediction, V2Prediction, PredictionLog, PredictionLogs
+    V1Prediction, V2Prediction, PredictionLog, PredictionLogs, UpdateDeployment
 from deeploy.enums import PredictionVersion, AuthType
 
 
@@ -58,6 +58,24 @@ class DeeployService(object):
 
         return repository
 
+    def get_deployment(
+                self, workspace_id: str, deployment_id: str,
+                withExamples: bool = False) -> Deployment:
+        url = '%s/v2/workspaces/%s/deployments/%s' % (self.__host, workspace_id, deployment_id)
+        params = {
+            'withExamples': withExamples,
+        }
+        deployment_response = requests.get(
+            url, params=params, auth=(self.__access_key, self.__secret_key))
+        if not self.__request_is_successful(deployment_response):
+            raise Exception('Failed to retrieve the deployment: %s' %
+                            str(deployment_response.json()))
+
+        deployment = parse_obj_as(
+            Deployment, deployment_response.json())
+
+        return deployment
+
     def create_deployment(self, workspace_id: str, deployment: CreateDeployment) -> Deployment:
         url = '%s/v2/workspaces/%s/deployments' % (self.__host, workspace_id)
         data = deployment.to_request_body()
@@ -69,6 +87,21 @@ class DeeployService(object):
 
         deployment = parse_obj_as(
             Deployment, deployment_response.json())
+
+        return deployment
+
+    def update_deployment(self, workspace_id: str, update: UpdateDeployment = None) -> Deployment:
+        url = '%s/v2/workspaces/%s/deployments/%s' % (self.__host,
+                                                      workspace_id, update.deployment_id)
+        data = update.to_request_body()
+
+        deployment_response = requests.patch(
+            url, json=data, auth=(self.__access_key, self.__secret_key))
+        if not self.__request_is_successful(deployment_response):
+            raise Exception('Failed to update the deployment: %s' % str(deployment_response.json()))
+
+        deployment = parse_obj_as(
+            Deployment, deployment_response.json()['data'])
 
         return deployment
 
@@ -140,7 +173,7 @@ class DeeployService(object):
 
         if not self.__request_is_successful(log_response):
             raise Exception('Failed to get log %s.' % log_id)
-        print(log_response.json())
+
         log = parse_obj_as(PredictionLog, log_response.json())
         return log
 
@@ -155,23 +188,28 @@ class DeeployService(object):
         logs = parse_obj_as(PredictionLogs, logs_response.json())
         return logs
 
-    def validate(self, workspace_id: str, deployment_id: str, log_id: str, validation_input: dict,
-                 explanation: str = None) -> None:
+    def validate(self, workspace_id: str, deployment_id: str, log_id: str,
+                 validation_input: dict) -> None:
         url = "%s/v2/workspaces/%s/deployments/%s/logs/%s/validations" % (
             self.__host, workspace_id, deployment_id, log_id)
 
+        if ((validation_input['result'] == 0) and ('value' in validation_input)):
+            raise Exception('An overrule value can not be provided when confirming the inference.')
+
         validation_response = requests.post(
             url, json=validation_input,
-            headers=self.__get_auth_header(AuthType.ALL),
-            params=explanation)
+            headers=self.__get_auth_header(AuthType.TOKEN))
         if not self.__request_is_successful(validation_response):
             if validation_response.status_code == 409:
                 raise Exception('Log has already been validated.')
+            elif validation_response.status_code == 401:
+                raise Exception('No permission to perform this action.')
             else:
                 raise Exception('Failed to request validation.')
 
     def __keys_are_valid(self) -> bool:
         host_for_testing = '%s/v2/workspaces' % self.__host
+
         workspaces_response = requests.get(
             host_for_testing, auth=(self.__access_key, self.__secret_key))
         if self.__request_is_successful(workspaces_response):

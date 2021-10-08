@@ -145,15 +145,17 @@ def test__create_deployment(deeploy_service):
         m.post('https://api.test.deeploy.ml/v2/workspaces/%s/deployments' % WORKSPACE_ID, \
             json=return_object)
         deployment = deeploy_service.create_deployment(WORKSPACE_ID, CreateDeployment(**{
-            'repository_id': "dcd35835-5e5a-4d9a-9116-8732131ed6e2",
             'name': "client test",
             'description': "the first test",
-            'model_type': ModelType.SKLEARN,
-            'model_serverless': False,
-            'explainer_type': ExplainerType.SHAP_KERNEL,
-            'explainer_serverless': False,
-            'branch_name': 'master',
-            'commit': '978b9cd9-f6cf-4f93-83de-ac669046a3e8',
+            'updating_to': {
+                'repository_id': "dcd35835-5e5a-4d9a-9116-8732131ed6e2",
+                'model_type': ModelType.SKLEARN,
+                'model_serverless': False,
+                'explainer_type': ExplainerType.SHAP_KERNEL,
+                'explainer_serverless': False,
+                'branch_name': 'master',
+                'commit': '978b9cd9-f6cf-4f93-83de-ac669046a3e8',
+            }
         }))
         assert deployment == expected_output
 

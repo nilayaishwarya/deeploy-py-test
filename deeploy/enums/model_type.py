@@ -8,3 +8,4 @@ class ModelType(Enum):
     XGBOOST = 3
     ONNX = 4
     TRITON = 5
+    CUSTOM = 6

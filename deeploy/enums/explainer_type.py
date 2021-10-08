@@ -7,3 +7,4 @@ class ExplainerType(Enum):
     ANCHOR_IMAGES = 2
     ANCHOR_TEXT = 3
     SHAP_KERNEL = 4
+    CUSTOM = 5

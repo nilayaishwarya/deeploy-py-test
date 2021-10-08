@@ -1,3 +1,4 @@
+from deeploy.models.update_deployment import UpdateDeployment
 import logging
 from typing import Any, Tuple
 import os
@@ -10,8 +11,9 @@ from pydantic import parse_obj_as
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from deeploy.models import ClientConfig, Deployment, CreateDeployment, DeployOptions, \
-    V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, PredictionLogs
-from deeploy.enums import ExplainerType
+    UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, \
+    PredictionLogs
+from deeploy.enums import ExplainerType, ModelType
 from deeploy.common.functions import delete_all_contents_in_directory, directory_exists, \
     directory_empty, file_exists
 
@@ -37,8 +39,6 @@ class Client(object):
             branch_name (str, optional): The banchname on which to commit new models.
                 Defaults to the current branchname.
         """
-        self.__access_key = access_key
-        self.__secret_key = secret_key
 
         self.__config = ClientConfig(**{
             'access_key': access_key,
@@ -75,7 +75,7 @@ class Client(object):
                 'model' and 'explainer' folders in the git folder. Defaults to False
             commit_message (str, optional): Commit message to use
         """
-        if not (self.__access_key and self.__secret_key):
+        if not (self.__config.access_key and self.__config.secret_key):
             raise Exception('Missing access credentials to create deployment.')
 
         git_service = GitService(local_repository_path)
@@ -93,20 +93,24 @@ class Client(object):
         git_service.pull()
         logging.info('Successfully pulled from the remote repository.')
 
-        logging.info('Saving the model to disk...')
-        model_wrapper = ModelWrapper(
-            model,
-            pytorch_model_file_path=options.pytorch_model_file_path,
-            pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
-        self.__prepare_model_directory(git_service, local_repository_path, overwrite)
-        model_folder = os.path.join(
-            local_repository_path, 'model')
-        model_wrapper.save(model_folder)
-        blob_storage_link = self.__upload_folder_to_blob(local_repository_path, model_folder)
-        shutil.rmtree(model_folder)
-        os.mkdir(model_folder)
-        self.__create_reference_file(model_folder, blob_storage_link)
-        git_service.add_folder_to_staging('model')
+        if options.modelBlobReferenceUrl or options.modelDockerImage:
+            model_type = ModelType.CUSTOM
+            self.__prepare_model_directory(git_service, local_repository_path, overwrite)
+            model_folder = os.path.join(
+                local_repository_path, 'model')
+            shutil.rmtree(model_folder)
+            os.mkdir(model_folder)
+            self.__create_reference_file(
+                model_folder, options.modelBlobReferenceUrl,
+                options.modelDockerImage, options.modelDockerPort,
+                options.modelDockerCredentialsId, options.modelBlobCredentialsId,
+                options.modelDockerUri)
+            git_service.add_folder_to_staging('model')
+        elif model:
+            model_wrapper = self.__process_model(
+                model, options, local_repository_path, git_service, overwrite)
+            model_type = model_wrapper.get_model_type()
+
         commit_message = '[Deeploy Client] Add new model'
 
         metadata_path = './metadata.json'
@@ -114,20 +118,22 @@ class Client(object):
         git_service.add_folder_to_staging(metadata_path)
 
         if explainer:
-            logging.info('Saving the explainer to disk...')
-            explainer_wrapper = ExplainerWrapper(explainer)
+            explainer_type = self.__process_explainer(explainer)
+            commit_message += ' and explainer'
+        elif options.explainerBlobReferenceUrl or options.explainerDockerImage:
+            explainer_type = ExplainerType.CUSTOM
             self.__prepare_explainer_directory(git_service, local_repository_path, overwrite)
             explainer_folder = os.path.join(
                 local_repository_path, 'explainer')
-            explainer_wrapper.save(explainer_folder)
-            blob_storage_link = self.__upload_folder_to_blob(
-                local_repository_path, explainer_folder)
             shutil.rmtree(explainer_folder)
             os.mkdir(explainer_folder)
-            self.__create_reference_file(explainer_folder, blob_storage_link)
+            self.__create_reference_file(
+                explainer_folder, options.explainerBlobReferenceUrl,
+                options.explainerDockerImage, options.explainerDockerPort,
+                options.explainerDockerCredentialsId, options.explainerBlobCredentialsId,
+                options.explainerDockerUri)
             git_service.add_folder_to_staging('explainer')
             commit_message += ' and explainer'
-            explainer_type = explainer_wrapper.get_explainer_type()
         else:
             explainer_type = ExplainerType.NO_EXPLAINER
 
@@ -139,19 +145,131 @@ class Client(object):
             'repository_id': self.__config.repository_id,
             'name': options.name,
             'description': options.description,
-            # TODO: example input & output
-            'example_input': options.example_input,
-            'example_output': options.example_output,
-            'model_type': model_wrapper.get_model_type().value,
-            'model_serverless': options.model_serverless,
-            'branch_name': git_service.get_current_branch_name(),
-            'commit': commit_sha,
-            'explainer_type': explainer_type.value,
-            'explainer_serverless': options.explainer_serverless,
+            'updating_to': {
+                # TODO: example input & output
+                'example_input': options.example_input,
+                'example_output': options.example_output,
+                'model_type': model_type.value,
+                'model_serverless': options.model_serverless,
+                'branch_name': git_service.get_current_branch_name(),
+                'commit': commit_sha,
+                'explainer_type': explainer_type.value,
+                'explainer_serverless': options.explainer_serverless,
+            }
         }
 
         deployment = self.__deeploy_service.create_deployment(
             self.__config.workspace_id, CreateDeployment(**deployment_options))
+
+        return deployment
+
+    def update(self, options: UpdateOptions, local_repository_path: str = None,
+               model: Any = None, explainer: Any = None, overwrite: bool = False,
+               commit: str = None, commit_message: str = None) -> Deployment:
+        """Update a model on Deeploy
+        Parameters:
+            model (Any): The class instance of an ML model
+            options (UpdateOptions): An instance of the update options class
+                containing the update options
+            local_repository_path (str): Absolute path to the local git repository
+                which is connected to Deeploy
+            explainer (Any, optional): The class instance of an optional model explainer
+            overwrite (bool, optional): Whether or not to overwrite files that are in the
+                'model' and 'explainer' folders in the git folder. Defaults to False
+            commit (str, optional): Commit SHA to update to
+            commit_message (str, optional): Commit message to use
+        """
+        if not (self.__config.access_key and self.__config.secret_key):
+            raise Exception('Missing access credentials to create deployment.')
+
+        if not (self.__deeploy_service.get_deployment(self.__config.workspace_id,
+                                                      options.deployment_id)):
+            raise Exception(
+                'Deployment was not found in the Deeploy workspace. \
+                            Make sure the Deployment Id is correct.')
+
+        if ((model or explainer) and (local_repository_path is None)):
+            raise Exception('Local repository path is required to update the model or explainer.')
+
+        if (model or explainer):
+            git_service = GitService(local_repository_path)
+            repository_in_workspace, repository_id = self.__is_git_repository_in_workspace(
+                git_service)
+
+            if not repository_in_workspace:
+                raise Exception(
+                    'Repository was not found in the Deeploy workspace. \
+                     Make sure you have connected it before')
+            else:
+                self.__config.repository_id = repository_id
+
+            logging.info('Pulling from the remote repository...')
+            git_service.pull()
+            logging.info('Successfully pulled from the remote repository.')
+
+            if model:
+                model_wrapper = self.__process_model(
+                    model, options, local_repository_path, git_service, overwrite)
+                model_type = model_wrapper.get_model_type().value
+                commit_message = '[Deeploy Client] Add new model'
+
+            if explainer:
+                explainer_wrapper = self.__process_explainer(
+                    explainer, git_service, local_repository_path, overwrite)
+                explainer_type = explainer_wrapper.get_explainer_type().value
+                if explainer_type != ExplainerType.NO_EXPLAINER.value:
+                    commit_message += ' and explainer'
+
+            logging.info('Committing and pushing the result to the remote.')
+            commit_sha = git_service.commit(commit_message)
+            git_service.push()
+            branch_name = git_service.get_current_branch_name()
+        else:
+            if commit is None:
+                raise Exception('Updating requires a different commit.')
+
+            current_deployment = self.__deeploy_service.get_deployment(
+                self.__config.workspace_id, options.deployment_id)
+
+            model_type = current_deployment.active_version['modelType']
+            explainer_type = current_deployment.active_version['explainerType']
+            branch_name = current_deployment.active_version['branchName']
+            commit_sha = commit
+
+        if current_deployment.active_version['status'] == 6:
+            raise Exception(
+                'Updating archived deployments is not possible. \
+                 Restore the deployment before updating.')
+
+        self.__config.repository_id = current_deployment.active_version['repositoryId']
+        status = current_deployment.status
+        owner_id = current_deployment.owner_id
+        kfserving_id = current_deployment.kf_serving_id
+        public_url = current_deployment.public_url
+
+        update_options = {
+            'deployment_id': options.deployment_id,
+            'name': options.name,
+            'kfserving_id': kfserving_id,
+            'owner_id': owner_id,
+            'public_url': public_url,
+            'description': options.description,
+            'status': status,
+            'updating_to': {
+                'repository_id': self.__config.repository_id,
+                'example_input': options.example_input,
+                'example_output': options.example_output,
+                'model_type': model_type,
+                'model_serverless': options.model_serverless,
+                'branch_name': branch_name,
+                'commit': commit_sha,
+                'explainer_type': explainer_type,
+                'explainer_serverless': options.explainer_serverless,
+            },
+        }
+
+        deployment = self.__deeploy_service.update_deployment(
+            self.__config.workspace_id, UpdateDeployment(**update_options))
 
         return deployment
 
@@ -197,18 +315,16 @@ class Client(object):
         log = self.__deeploy_service.getOneLog(workspace_id, deployment_id, log_id)
         return log
 
-    def validate(self, deployment_id: str, log_id: str, validation_input: dict,
-                 explanation: str = None) -> None:
+    def validate(self, deployment_id: str, log_id: str, validation_input: dict) -> None:
         """Validate a log
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
             log_id (int): ID of the log to be validated
             validation_input: Dict with result, value, and explanation
-            explanation: Optional explanation of the validation
         """
         workspace_id = self.__config.workspace_id
         self.__deeploy_service.validate(workspace_id, deployment_id,
-                                        log_id, validation_input, explanation)
+                                        log_id, validation_input)
 
     def __are_clientoptions_valid(self, config: ClientConfig) -> bool:
         """Check if the supplied options are valid
@@ -326,17 +442,22 @@ class Client(object):
         return blob_folder_path
 
     def __create_reference_file(self, local_folder_path: str, blob_storage_link: str = None,
-                                docker_image: str = None, docker_image_port: int = None) -> None:
+                                docker_image: str = None, docker_image_port: int = None,
+                                docker_credentials: str = None, blob_credentials: str = None,
+                                docker_uri: str = None) -> None:
         file_path = os.path.join(local_folder_path, 'reference.json')
 
         reference_json = {
             'reference': {
                 'docker': {
                     'image': docker_image,
+                    'uri': docker_uri,
+                    'credentialsId': docker_credentials,
                     'port': docker_image_port,
                 },
                 'blob': {
                     'url': blob_storage_link,
+                    'credentialsId': blob_credentials,
                 },
             },
         }
@@ -346,3 +467,38 @@ class Client(object):
         with open(file_path, 'w') as outfile:
             json.dump(data.dict(), outfile)
         return
+
+    def __process_model(self, model, options: DeployOptions or UpdateOptions,
+                        local_repository_path: str, git_service: GitService,
+                        overwrite: bool) -> ModelWrapper:
+        logging.info('Saving the model to disk...')
+        model_wrapper = ModelWrapper(
+            model,
+            pytorch_model_file_path=options.pytorch_model_file_path,
+            pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
+        self.__prepare_model_directory(git_service, local_repository_path, overwrite)
+        model_folder = os.path.join(
+            local_repository_path, 'model')
+        model_wrapper.save(model_folder)
+        blob_storage_link = self.__upload_folder_to_blob(local_repository_path, model_folder)
+        shutil.rmtree(model_folder)
+        os.mkdir(model_folder)
+        self.__create_reference_file(model_folder, blob_storage_link)
+        git_service.add_folder_to_staging('model')
+        return model_wrapper
+
+    def __process_explainer(self, explainer, git_service: GitService,
+                            local_repository_path: str, overwrite: bool) -> ExplainerType:
+        logging.info('Saving the explainer to disk...')
+        explainer_wrapper = ExplainerWrapper(explainer)
+        self.__prepare_explainer_directory(git_service, local_repository_path, overwrite)
+        explainer_folder = os.path.join(
+            local_repository_path, 'explainer')
+        explainer_wrapper.save(explainer_folder)
+        blob_storage_link = self.__upload_folder_to_blob(
+            local_repository_path, explainer_folder)
+        shutil.rmtree(explainer_folder)
+        os.mkdir(explainer_folder)
+        self.__create_reference_file(explainer_folder, blob_storage_link)
+        git_service.add_folder_to_staging('explainer')
+        return explainer_wrapper
