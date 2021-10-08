@@ -5,11 +5,14 @@ from pydantic import BaseModel
 
 class DockerReference(BaseModel):
     image: str
+    uri: str
     port: Optional[int]
+    credentialsId: Optional[str]
 
 
 class BlobReference(BaseModel):
     url: str
+    credentialsId: Optional[str]
 
 
 class ModelReference(BaseModel):

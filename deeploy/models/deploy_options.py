@@ -28,3 +28,27 @@ class DeployOptions(BaseModel):
         ['image_classifier', 'image_classifier', 'object_detector', 'text_classifier']. 
         See the (TorchServe documentation)[https://github.com/pytorch/serve/blob/master/docs/default_handlers.md#torchserve-default-inference-handlers]
         for more info."""  # noqa
+    modelDockerImage: Optional[str] = None
+    """str: url of the model's docker image"""  # noqa
+    modelDockerUri: Optional[str] = None
+    """str: docker uri of the model"""  # noqa
+    modelDockerPort: Optional[str] = None
+    """str: model's docker port to use"""  # noqa
+    modelDockerCredentialsId: Optional[str] = None
+    """str: credentials id of the model's docker image"""  # noqa
+    modelBlobReferenceUrl: Optional[str] = None
+    """str: url of the model's blob storage location""" # noqa
+    modelBlobCredentialsId: Optional[str] = None
+    """str: credentials id of the model's blob storage"""  # noqa
+    explainerDockerImage: Optional[str] = None
+    """str: url of the explainer's docker image"""  # noqa
+    explainerDockerUri: Optional[str] = None
+    """str: docker uri of the explainer"""  # noqa
+    explainerDockerPort: Optional[str] = None
+    """str: explainer's docker port to use"""  # noqa
+    explainerDockerCredentialsId: Optional[str] = None
+    """str: credentials id of the explainer's docker image"""  # noqa
+    explainerBlobReferenceUrl: Optional[str] = None
+    """str: url of the explainer's blob storage location""" # noqa
+    explainerBlobCredentialsId: Optional[str] = None
+    """str: credentials id of the explainer's blob storage"""  # noqa

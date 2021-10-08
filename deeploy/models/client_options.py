@@ -18,8 +18,9 @@ class ClientConfig(BaseModel):
       branch_name: string representing the branch name on which to commit. Defaults
         to the local active branch
     """
-    access_key: str
-    secret_key: str
+    access_key: Optional[str]
+    secret_key: Optional[str]
+    token: Optional[str]
     host: str
     workspace_id: str
     repository_id: str
