@@ -4,8 +4,6 @@ import logging
 
 
 def to_lower_camel(string: str) -> str:
-    if string == 'git_ssh_pull_link':
-        return 'gitSSHPullLink'
     if string == 'public_url':
         return 'publicURL'
 
