@@ -9,12 +9,12 @@ class Repository(BaseModel):
     id: str
     name: str
     status: int
-    is_archived: bool
-    workspace_id: str
-    is_public: Optional[bool]
-    git_ssh_pull_link: str
-    created_at: str
-    updated_at: str
+    isArchived: bool
+    workspaceId: str
+    isPublic: Optional[bool]
+    remotePath: str
+    createdAt: str
+    updatedAt: str
 
     class Config:
         alias_generator = to_lower_camel
