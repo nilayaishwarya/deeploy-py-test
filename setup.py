@@ -5,12 +5,12 @@ with open("docs/pypi.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='deeploy',
-    version='0.3.0',
+    version='0.3.1',
     description='The official Deeploy client for Python',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author='Lars Suanet',
-    author_email='lars@deeploy.ml',
+    author='Matthijs Hulsebos',
+    author_email='mhulsebos@deeploy.ml',
     packages=setuptools.find_packages(),
     url="https://gitlab.com/deeploy-ml/deeploy-python-client",
     project_urls={
