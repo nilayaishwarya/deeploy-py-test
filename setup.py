@@ -5,7 +5,7 @@ with open("docs/pypi.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='deeploy',
-    version='0.3.1',
+    version='0.3.2',
     description='The official Deeploy client for Python',
     long_description=long_description,
     long_description_content_type="text/markdown",
