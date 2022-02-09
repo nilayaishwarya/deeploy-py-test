@@ -342,7 +342,7 @@ class Client(object):
 
         repositories = self.__deeploy_service.get_repositories(workspace_id)
         correct_repositories = list(
-            filter(lambda x: x.git_ssh_pull_link == remote_url, repositories))
+            filter(lambda x: x.remote_path == remote_url, repositories))
 
         if len(correct_repositories) != 0:
             repository_id = correct_repositories[0].id
