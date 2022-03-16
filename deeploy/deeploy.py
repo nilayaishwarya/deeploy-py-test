@@ -1,4 +1,3 @@
-from deeploy.models.update_deployment import UpdateDeployment
 import logging
 from typing import Any, Tuple
 import os
@@ -10,8 +9,8 @@ import json
 from pydantic import parse_obj_as
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
-from deeploy.models import ClientConfig, Deployment, CreateDeployment, DeployOptions, \
-    UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, \
+from deeploy.models import ClientConfig, Deployment, CreateDeployment, UpdateDeployment, \
+    DeployOptions, UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, \
     PredictionLogs
 from deeploy.enums import ExplainerType, ModelType
 from deeploy.common.functions import delete_all_contents_in_directory, directory_exists, \
@@ -180,28 +179,36 @@ class Client(object):
             commit_message (str, optional): Commit message to use
         """
         if not (self.__config.access_key and self.__config.secret_key):
-            raise Exception('Missing access credentials to create deployment.')
+            raise Exception('Missing access credentials to update deployment.')
 
         if not (self.__deeploy_service.get_deployment(self.__config.workspace_id,
                                                       options.deployment_id)):
             raise Exception(
                 'Deployment was not found in the Deeploy workspace. \
-                            Make sure the Deployment Id is correct.')
+                 Make sure the Deployment Id is correct.')
 
-        if ((model or explainer) and (local_repository_path is None)):
-            raise Exception('Local repository path is required to update the model or explainer.')
+        current_deployment = self.__deeploy_service.get_deployment(
+            self.__config.workspace_id, options.deployment_id)
+
+        model_type = None
+        explainer_type = None
 
         if (model or explainer):
-            git_service = GitService(local_repository_path)
-            repository_in_workspace, repository_id = self.__is_git_repository_in_workspace(
-                git_service)
+            if (local_repository_path is None):
+                raise Exception(
+                    'Local repository path is required to update \
+                     the model or explainer.')
+            else:
+                git_service = GitService(local_repository_path)
+                repository_in_workspace, repository_id = \
+                    self.__is_git_repository_in_workspace(git_service)
 
             if not repository_in_workspace:
                 raise Exception(
                     'Repository was not found in the Deeploy workspace. \
-                     Make sure you have connected it before')
-            else:
-                self.__config.repository_id = repository_id
+                     Make sure you have connected it before.')
+
+            self.__config.repository_id = repository_id
 
             logging.info('Pulling from the remote repository...')
             git_service.pull()
@@ -221,57 +228,32 @@ class Client(object):
                     commit_message += ' and explainer'
 
             logging.info('Committing and pushing the result to the remote.')
-            commit_sha = git_service.commit(commit_message)
+            commit = git_service.commit(commit_message)
             git_service.push()
-            branch_name = git_service.get_current_branch_name()
-        else:
-            if commit is None:
-                raise Exception('Updating requires a different commit.')
-
-            current_deployment = self.__deeploy_service.get_deployment(
-                self.__config.workspace_id, options.deployment_id)
-
-            model_type = current_deployment.active_version['modelType']
-            explainer_type = current_deployment.active_version['explainerType']
-            branch_name = current_deployment.active_version['branchName']
-            commit_sha = commit
-
-        if current_deployment.active_version['status'] == 6:
-            raise Exception(
-                'Updating archived deployments is not possible. \
-                 Restore the deployment before updating.')
 
         self.__config.repository_id = current_deployment.active_version['repositoryId']
-        status = current_deployment.status
-        owner_id = current_deployment.owner_id
-        kfserving_id = current_deployment.kf_serving_id
-        public_url = current_deployment.public_url
 
         update_options = {
             'deployment_id': options.deployment_id,
             'name': options.name,
-            'kfserving_id': kfserving_id,
-            'owner_id': owner_id,
-            'public_url': public_url,
             'description': options.description,
-            'status': status,
             'updating_to': {
                 'repository_id': self.__config.repository_id,
                 'example_input': options.example_input,
                 'example_output': options.example_output,
                 'model_type': model_type,
                 'model_serverless': options.model_serverless,
-                'branch_name': branch_name,
-                'commit': commit_sha,
+                'commit': commit,
+                'commit_message': commit_message,
                 'explainer_type': explainer_type,
                 'explainer_serverless': options.explainer_serverless,
             },
         }
 
-        deployment = self.__deeploy_service.update_deployment(
+        updated_deployment = self.__deeploy_service.update_deployment(
             self.__config.workspace_id, UpdateDeployment(**update_options))
 
-        return deployment
+        return updated_deployment
 
     def predict(self, deployment_id: str, request_body: dict) -> V1Prediction or V2Prediction:
         """Make a predict call

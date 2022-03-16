@@ -12,10 +12,10 @@ class UpdateOptions(BaseModel):
     """str, optional: the display name of the deployment"""  # noqa
     description: Optional[str]
     """str, optional: the description of the deployment"""  # noqa
-    model_serverless = False
-    """bool, optional: whether to deploy the model in a serverless fashion. Defaults to False"""  # noqa
-    explainer_serverless = False
-    """bool, optional: whether to deploy the model in a serverless fashion. Defaults to False"""  # noqa
+    model_serverless: Optional[bool]
+    """bool, optional: whether to deploy the model in a serverless fashion"""  # noqa
+    explainer_serverless: Optional[bool]
+    """bool, optional: whether to deploy the model in a serverless fashion"""  # noqa
     example_input: Optional[List[Any]]
     """List, optional: list of example input parameters for the model"""  # noqa
     example_output: Optional[List[Any]]

@@ -90,9 +90,10 @@ class DeeployService(object):
 
         return deployment
 
-    def update_deployment(self, workspace_id: str, update: UpdateDeployment = None) -> Deployment:
+    def update_deployment(self, workspace_id: str, update: UpdateDeployment) -> Deployment:
         url = '%s/v2/workspaces/%s/deployments/%s' % (self.__host,
-                                                      workspace_id, update.deployment_id)
+                                                      workspace_id,
+                                                      update.deployment_id)
         data = update.to_request_body()
 
         deployment_response = requests.patch(

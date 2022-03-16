@@ -18,16 +18,13 @@ class UpdateDeployment(BaseModel):
     updating_to: Optional[CreateVersion]
 
     def to_request_body(self) -> Dict:
-        return {
-            'id': self.deployment_id,
+        request_body = {
             'name': self.name,
             'kfServingId': self.kfserving_id,
             'ownerId': self.owner_id,
-            'publicURL': self.public_url,
             'description': self.description,
+            'status': self.status,
             'updatingTo': {
-                'repositoryId': self.updating_to.repository_id,
-                'branchName': self.updating_to.branch_name,
                 'commit': self.updating_to.commit,
                 'commitMessage': self.updating_to.commit_message,
                 'hasExampleInput': self.updating_to.has_example_input,
@@ -35,9 +32,12 @@ class UpdateDeployment(BaseModel):
                 'exampleOutput': self.updating_to.example_output,
                 'inputTensorSize': self.updating_to.input_tensor_size,
                 'outputTensorSize': self.updating_to.output_tensor_size,
-                'modelType': self.updating_to.model_type.value,
+                'modelType': self.updating_to.model_type,
                 'modelServerless': self.updating_to.model_serverless,
-                'explainerType': self.updating_to.explainer_type.value,
+                'explainerType': self.updating_to.explainer_type,
                 'explainerServerless': self.updating_to.explainer_serverless,
             }
         }
+        request_body['updatingTo'] = {k: v for k, v in request_body['updatingTo'].items()
+                                      if v is not None}
+        return {k: v for k, v in request_body.items() if v is not None and v != {}}
