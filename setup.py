@@ -1,11 +1,22 @@
+import os
+import re
 import setuptools
 
 with open("docs/pypi.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+VERSIONFILE = "deeploy/_version.py"
+VERSIONRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+version_string = open(VERSIONFILE, "rt").read()
+mo = re.search(VERSIONRE, version_string, re.M)
+if mo:
+    version = mo.group(1)
+else:
+    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+
 setuptools.setup(
     name='deeploy',
-    version='0.3.2',
+    version=version,
     description='The official Deeploy client for Python',
     long_description=long_description,
     long_description_content_type="text/markdown",

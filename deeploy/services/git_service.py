@@ -14,6 +14,7 @@ class GitService(object):
         """
         # TODO: branch name
         self.repository = Repo(local_repository_path)
+        self.branch = self.repository.active_branch
         self.remote = self.repository.remote('origin')
 
         if not self.__is_valid_git_project():
