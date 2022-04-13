@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Any
 
 from pydantic import BaseModel
 
@@ -12,8 +12,7 @@ class V1Prediction(Prediction):
 
 
 class V2Prediction(Prediction):
-    id: str
-    model_name: str
-    model_version: Optional[str]
-    parameters: Optional[Dict]
-    outputs: List[Dict]
+    predictions: List[Any]
+    featureLabels: Optional[List[str]]
+    requestLogId: Optional[str]
+    predictionLogIds: Optional[List[str]]

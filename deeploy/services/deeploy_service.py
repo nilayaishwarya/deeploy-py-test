@@ -5,7 +5,8 @@ import requests
 from pydantic import parse_obj_as
 
 from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, \
-    V1Prediction, V2Prediction, PredictionLog, PredictionLogs, UpdateDeployment
+    V1Prediction, V2Prediction, PredictionLog, PredictionLogs, UpdateDeployment, \
+    UpdateDeploymentMetadata
 from deeploy.enums import PredictionVersion, AuthType
 
 
@@ -59,8 +60,8 @@ class DeeployService(object):
         return repository
 
     def get_deployment(
-                self, workspace_id: str, deployment_id: str,
-                withExamples: bool = False) -> Deployment:
+            self, workspace_id: str, deployment_id: str,
+            withExamples: bool = False) -> Deployment:
         url = '%s/v2/workspaces/%s/deployments/%s' % (self.__host, workspace_id, deployment_id)
         params = {
             'withExamples': withExamples,
@@ -102,6 +103,23 @@ class DeeployService(object):
             raise Exception('Failed to update the deployment: %s' % str(deployment_response.json()))
 
         deployment = parse_obj_as(
+            Deployment, deployment_response.json())
+
+        return deployment
+
+    def update_deployment_metadata(self, workspace_id: str,
+                                   update: UpdateDeploymentMetadata) -> Deployment:
+        url = '%s/v2/workspaces/%s/deployments/%s/metadata' % (self.__host,
+                                                               workspace_id,
+                                                               update.deployment_id)
+        data = update.to_request_body()
+
+        deployment_response = requests.patch(
+            url, json=data, auth=(self.__access_key, self.__secret_key))
+        if not self.__request_is_successful(deployment_response):
+            raise Exception('Failed to update the deployment: %s' % str(deployment_response.json()))
+
+        deployment = parse_obj_as(
             Deployment, deployment_response.json()['data'])
 
         return deployment
@@ -130,6 +148,7 @@ class DeeployService(object):
         files = {'file': open(local_file_path, 'rb')}
         r = requests.post(url, files=files, params=params,
                           auth=(self.__access_key, self.__secret_key))
+
         blob_storage_path = r.json()['data']['referencePath']
         return blob_storage_path
 
@@ -179,7 +198,9 @@ class DeeployService(object):
         return log
 
     def getLogs(self, workspace_id: str, deployment_id: str) -> PredictionLogs:
-        url = '%s/v2/workspaces/%s/deployments/%s/logs' % (self.__host, workspace_id, deployment_id)
+        url = '%s/v2/workspaces/%s/deployments/%s/logs' % (self.__host,
+                                                           workspace_id,
+                                                           deployment_id)
 
         logs_response = requests.get(
             url, headers=self.__get_auth_header(AuthType.ALL))
@@ -233,10 +254,10 @@ class DeeployService(object):
         return False
 
     def __check_prediction_version(self, prediction_response: dict) -> PredictionVersion:
-        if 'predictions' in prediction_response.json():
-            return PredictionVersion.V1
-        else:
+        if len(prediction_response.json()) > 1:
             return PredictionVersion.V2
+        else:
+            return PredictionVersion.V1
 
     def __parse_prediction(self, prediction_response: dict) -> V1Prediction or V2Prediction:
         if self.__check_prediction_version(prediction_response) == PredictionVersion.V1:

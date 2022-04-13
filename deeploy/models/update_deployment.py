@@ -1,8 +1,6 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from pydantic import BaseModel
-
-from deeploy.models.create_deployment import CreateVersion
 
 
 class UpdateDeployment(BaseModel):
@@ -11,33 +9,59 @@ class UpdateDeployment(BaseModel):
     deployment_id: str
     name: Optional[str]
     kfserving_id: Optional[str]
-    owner_id: Optional[str]
-    public_url: Optional[str]
-    description: Optional[str]
     status: Any
-    updating_to: Optional[CreateVersion]
+    commit: Optional[str]
+    commit_message: Optional[str]
+    contract_path: Optional[str]
+    model_type: Optional[Any]
+    model_serverless: Optional[bool] = False
+    explainer_type: Optional[Any]
+    explainer_serverless: Optional[bool] = False
 
     def to_request_body(self) -> Dict:
         request_body = {
+            'id': self.deployment_id,
             'name': self.name,
             'kfServingId': self.kfserving_id,
+            'status': self.status,
+            'commit': self.commit,
+            'commitMessage': self.commit_message,
+            'contractPath': self.contract_path,
+            'modelType': self.model_type,
+            'modelServerless': self.model_serverless,
+            'explainerType': self.explainer_type,
+            'explainerServerless': self.explainer_serverless,
+        }
+        request_body = {k: v for k, v in request_body.items()
+                        if v is not None}
+        return {k: v for k, v in request_body.items() if v is not None and v != {}}
+
+
+class UpdateDeploymentMetadata(BaseModel):
+    """Class that contains the options for updating a model that doesn't require restarting pods
+    """  # noqa
+    deployment_id: str
+    name: Optional[str]
+    description: Optional[str]
+    owner_id: Optional[str]
+    has_example_input: Optional[bool]
+    example_input: Optional[List[Any]]
+    example_output: Optional[Any]
+    input_tensor_size: Optional[str]
+    output_tensor_size: Optional[str]
+
+    def to_request_body(self) -> Dict:
+        request_body = {
+            'id': self.deployment_id,
+            'name': self.name,
             'ownerId': self.owner_id,
             'description': self.description,
-            'status': self.status,
-            'updatingTo': {
-                'commit': self.updating_to.commit,
-                'commitMessage': self.updating_to.commit_message,
-                'hasExampleInput': self.updating_to.has_example_input,
-                'exampleInput': self.updating_to.example_input,
-                'exampleOutput': self.updating_to.example_output,
-                'inputTensorSize': self.updating_to.input_tensor_size,
-                'outputTensorSize': self.updating_to.output_tensor_size,
-                'modelType': self.updating_to.model_type,
-                'modelServerless': self.updating_to.model_serverless,
-                'explainerType': self.updating_to.explainer_type,
-                'explainerServerless': self.updating_to.explainer_serverless,
-            }
+            'hasExampleInput': self.has_example_input,
+            'exampleInput': self.example_input,
+            'exampleOutput': self.example_output,
+            'inputTensorSize': self.input_tensor_size,
+            'outputTensorSize': self.output_tensor_size,
         }
-        request_body['updatingTo'] = {k: v for k, v in request_body['updatingTo'].items()
-                                      if v is not None}
+        request_body = {k: v for k, v in request_body.items()
+                        if v is not None}
         return {k: v for k, v in request_body.items() if v is not None and v != {}}
