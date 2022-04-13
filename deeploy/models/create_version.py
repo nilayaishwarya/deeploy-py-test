@@ -10,6 +10,7 @@ class CreateVersion(BaseModel):
     branch_name: Optional[str]
     commit: Optional[str]
     commit_message: Optional[str]
+    contract_path: Optional[str]
     has_example_input: Optional[bool]
     example_input: Optional[List[Any]]
     example_output: Optional[Any]

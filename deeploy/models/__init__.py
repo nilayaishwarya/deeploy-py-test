@@ -1,5 +1,5 @@
 from .deployment import Deployment # noqa
-from .update_deployment import UpdateDeployment # noqa
+from .update_deployment import UpdateDeployment, UpdateDeploymentMetadata # noqa
 from .create_version import CreateVersion # noqa
 from .repository import Repository # noqa
 from .client_options import ClientConfig # noqa

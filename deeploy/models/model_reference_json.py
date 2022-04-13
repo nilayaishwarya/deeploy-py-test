@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 
 class DockerReference(BaseModel):
-    image: str
-    uri: str
+    image: Optional[str]
+    uri: Optional[str]
     port: Optional[int]
     credentialsId: Optional[str]
 
