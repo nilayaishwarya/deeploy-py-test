@@ -8,6 +8,69 @@ Download the latest version by running:
 pip3 install deeploy
 ```
 
+## Deploy flows
+
+There are multiple paths that can be followed in order to create a new deployment.
+
+`Model and explainer variables (*)`
+When passing a model and/or explainer to the deploy function the client will update the reference.json files in the repository or create new reference.json files if they do not yet exist.
+
+```
+from deeploy import DeployOptions
+from deeploy.enums import ModelType
+
+deploy_options = DeployOptions(**{
+        'name': 'My Deployment Name',
+        'description': 'My Deployment Description'
+    })
+    
+client.deploy(
+    options=deploy_options, 
+    overwrite=True, 
+    model_type=ModelType.PYTORCH.value, 
+    local_repository_path='myPath', 
+    model=myPytorchModel)
+```
+
+`Blob storage locations and custom Docker images (*)`
+By passing access credentials to a blob storage location or Docker image it is possible to upload models and explainers that are stored as a file in a blob storage location or as a custom Docker image. This approach will update the reference.json files in the repository or create new reference.json files if they do not yet exist.
+
+```
+from deeploy import DeployOptions
+from deeploy.enums import ModelType
+
+deploy_options = DeployOptions(**{
+        'modelBlobReferenceUrl': myUrl,
+    })
+
+client.deploy(
+    options=deploy_options, 
+    overwrite=True, 
+    model_type=ModelType.PYTORCH.value, 
+    local_repository_path='myPath',
+    )
+```
+
+`Existing reference.json files`
+Creating a deployment from existing reference.json files requires passing a model and/or explainer type unless it is a custom Docker image.
+
+```
+from deeploy import DeployOptions
+from deeploy.enums import ModelType
+
+deploy_options = DeployOptions(**{
+        'name': 'My Deployment Name',
+        'description': 'My Deployment Description'
+    })
+
+client.deploy(
+    options=deploy_options, 
+    model_type=ModelType.PYTORCH.value, 
+    local_repository_path='myPath')
+```
+
+*Only possible when the argument `overwrite` is set to True, otherwise the client will use the existing reference.json files to create the deployment.
+
 ## Deploying a model
 
 Initialise the `Client`:
