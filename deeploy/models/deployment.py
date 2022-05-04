@@ -22,25 +22,3 @@ class Deployment(BaseModel):
 
     class Config:
         alias_generator = to_lower_camel
-
-
-class DeployOptions(BaseModel):
-    """
-    Class that contains the options for deploying a model
-
-    Attributes:
-      name: name of the deployment
-      model_serverless: boolean indicating whether to deploy the model in
-        a serverless fashion. Defaults to False
-      explainer_serverless: boolean indicating whether to deploy the model in
-        a serverless fashion. Defaults to False
-      description: string with the description of the deployment
-      example_input: list of example input parameters for the model
-      example_output: list of example output for the model
-    """
-    name: str
-    model_serverless = False
-    explainer_serverless = False
-    description: Optional[str]
-    example_input: Optional[List[Any]]
-    example_output: Optional[List[Any]]

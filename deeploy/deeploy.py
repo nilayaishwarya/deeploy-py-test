@@ -7,6 +7,7 @@ import json
 
 
 from pydantic import parse_obj_as
+from git import Repo
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from deeploy.models import ClientConfig, Deployment, CreateDeployment, UpdateDeployment, \
@@ -59,8 +60,9 @@ class Client(object):
 
         return
 
-    def deploy(self, model: Any, options: DeployOptions, local_repository_path: str,
-               explainer: Any = None, overwrite: bool = False,
+    def deploy(self, options: DeployOptions, local_repository_path: str,
+               model: Any = None, explainer: Any = None, model_type: int = None,
+               explainer_type: int = None, overwrite: bool = False,
                commit_message: str = None, contract_path: str = "") -> Deployment:
         """Deploy a model on Deeploy
         Parameters:
@@ -70,10 +72,16 @@ class Client(object):
             local_repository_path (str): Absolute path to the local git repository
                 which is connected to Deeploy
             explainer (Any, optional): The class instance of an optional model explainer
+            model_type (int, optional): model type enum from ModelType class
+            explainer_type (int, optional): mopel type enum from ExplainerType class
             overwrite (bool, optional): Whether or not to overwrite files that are in the
                 'model' and 'explainer' folders in the git folder. Defaults to False
             commit_message (str, optional): Commit message to use
+            contract_path (str, optional): Relative repository subpath that contains the
+                Deeploy contract to deploy from
         """
+        commit = False
+
         if not (self.__config.access_key and self.__config.secret_key):
             raise Exception('Missing access credentials to create deployment.')
 
@@ -92,7 +100,7 @@ class Client(object):
         git_service.pull()
         logging.info('Successfully pulled from the remote repository.')
 
-        if options.modelBlobReferenceUrl or options.modelDockerImage:
+        if options.modelDockerImage:
             model_type = ModelType.CUSTOM
             self.__prepare_model_directory(git_service, local_repository_path, overwrite)
             model_folder = os.path.join(
@@ -105,10 +113,44 @@ class Client(object):
                 options.modelDockerCredentialsId, options.modelBlobCredentialsId,
                 options.modelDockerUri)
             git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
+        elif options.modelBlobReferenceUrl and model_type:
+            model_type = model_type
+            self.__prepare_model_directory(git_service, local_repository_path, overwrite)
+            model_folder = os.path.join(
+                local_repository_path, contract_path, 'model')
+            shutil.rmtree(model_folder)
+            os.mkdir(model_folder)
+            self.__create_reference_file(
+                model_folder, options.modelBlobReferenceUrl,
+                options.modelDockerImage, options.modelDockerPort,
+                options.modelDockerCredentialsId, options.modelBlobCredentialsId,
+                options.modelDockerUri)
+            git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
         elif model:
-            model_wrapper = self.__process_model(
+            model_type = self.__process_model(
+                model, options, local_repository_path, git_service, overwrite, contract_path).value
+        else:
+            self.__process_model(
                 model, options, local_repository_path, git_service, overwrite, contract_path)
-            model_type = model_wrapper.get_model_type()
+            reference_path = os.path.join(
+                local_repository_path, contract_path, 'model', 'reference.json')
+            if not os.path.exists(reference_path):
+                raise Exception('Missing model reference file in repository.')
+
+            try:
+                with open(reference_path) as referenceFile:
+                    data = json.load(referenceFile)
+                    if 'reference' in data:
+                        if "blob" in data['reference']:
+                            model_type = model_type
+                        elif "docker" in data['reference']:
+                            model_type = ModelType.CUSTOM.value
+                        else:
+                            raise Exception('No information on to be deployed model available.')
+                    else:
+                        raise Exception('No information on to be deployed model available.')
+            except IOError:
+                raise Exception('Failed to deploy model from reference.json file.')
 
         commit_message = '[Deeploy Client] Add new model'
 
@@ -132,15 +174,34 @@ class Client(object):
             git_service.add_folder_to_staging(os.path.join(contract_path, 'explainer'))
             commit_message += ' and explainer'
         else:
-            explainer_type = ExplainerType.NO_EXPLAINER
+            reference_path = os.path.join(
+                local_repository_path, contract_path, 'explainer', 'reference.json')
+
+            try:
+                with open(reference_path) as referenceFile:
+                    data = json.load(referenceFile)
+                    if 'reference' in data:
+                        if "blob" in data['reference']:
+                            explainer_type = explainer_type
+                        elif "docker" in data['reference']:
+                            explainer_type = ExplainerType.CUSTOM.value
+                        else:
+                            raise Exception('No information on to be deployed explainer available.')
+                    else:
+                        raise Exception('No information on to be deployed explainer available.')
+            except IOError:
+                explainer_type = ExplainerType.NO_EXPLAINER.value
 
         metadata_path = os.path.join(local_repository_path, contract_path, 'metadata.json')
         self.__prepare_metadata_file(metadata_path, options.feature_labels, overwrite)
         git_service.add_folder_to_staging(os.path.join(contract_path, 'metadata.json'))
 
-        logging.info('Committing and pushing the result to the remote.')
-        commit_sha = git_service.commit(commit_message)
-        git_service.push()
+        if commit:
+            logging.info('Committing and pushing the result to the remote.')
+            commit_sha = git_service.commit(commit_message)
+            git_service.push()
+        else:
+            commit_sha = Repo(local_repository_path).head.commit.hexsha
 
         deployment_options = {
             'name': options.name,
@@ -148,12 +209,23 @@ class Client(object):
             'repository_id': self.__config.repository_id,
             'example_input': options.example_input,
             'example_output': options.example_output,
-            'model_type': model_type.value,
+            'model_type': model_type,
             'model_serverless': options.model_serverless,
+            'model_instance_type': options.model_instance_type,
+            'model_cpu_limit': options.model_cpu_limit,
+            'model_cpu_request': options.model_cpu_request,
+            'model_mem_limit': options.model_mem_limit,
+            'model_mem_request': options.model_mem_request,
             'branch_name': git_service.get_current_branch_name(),
             'commit': commit_sha,
-            'explainer_type': explainer_type.value,
+            'explainer_type': explainer_type,
             'explainer_serverless': options.explainer_serverless,
+            'explainer_instance_type': options.explainer_instance_type,
+            'explainer_cpu_limit': options.explainer_cpu_limit,
+            'explainer_cpu_request': options.explainer_cpu_request,
+            'explainer_mem_limit': options.explainer_mem_limit,
+            'explainer_mem_request': options.explainer_mem_request,
+            'prediction_method': options.prediction_method,
             'contract_path': contract_path,
         }
 
@@ -163,7 +235,8 @@ class Client(object):
         return deployment
 
     def update(self, options: UpdateOptions, local_repository_path: str = None,
-               model: Any = None, explainer: Any = None, overwrite: bool = False,
+               model: Any = None, explainer: Any = None, model_type: int = None,
+               explainer_type: int = None, overwrite: bool = False,
                commit: str = None, commit_message: str = None,
                contract_path: str = "") -> Deployment:
         """Update a model on Deeploy
@@ -174,10 +247,14 @@ class Client(object):
             local_repository_path (str): Absolute path to the local git repository
                 which is connected to Deeploy
             explainer (Any, optional): The class instance of an optional model explainer
+            model_type (int, optional): model type enum from ModelType class
+            explainer_type (int, optional): mopel type enum from ExplainerType class
             overwrite (bool, optional): Whether or not to overwrite files that are in the
                 'model' and 'explainer' folders in the git folder. Defaults to False
             commit (str, optional): Commit SHA to update to
             commit_message (str, optional): Commit message to use
+            contract_path (str, optional): Relative repository subpath that contains the
+                Deeploy contract to deploy from
         """
         if not (self.__config.access_key and self.__config.secret_key):
             raise Exception('Missing access credentials to update deployment.')
@@ -191,8 +268,6 @@ class Client(object):
         current_deployment = self.__deeploy_service.get_deployment(
             self.__config.workspace_id, options.deployment_id)
 
-        model_type = None
-        explainer_type = None
         commit_sha = None
 
         if (model or explainer):
@@ -221,13 +296,21 @@ class Client(object):
                     model, options, local_repository_path, git_service, overwrite, contract_path)
                 model_type = model_wrapper.get_model_type().value
                 commit_message = '[Deeploy Client] Add new model'
+            else:
+                # TODO: read existing reference.json and check if its a blob url or image
+                # if blob url then require model_type else set model_type as custom
+                model_type = model_type if model_type else ModelType.CUSTOM.value
 
             if explainer:
                 explainer_wrapper = self.__process_explainer(
-                    explainer, git_service, local_repository_path, overwrite)
+                    explainer, git_service, local_repository_path, overwrite, contract_path)
                 explainer_type = explainer_wrapper.get_explainer_type().value
                 if explainer_type != ExplainerType.NO_EXPLAINER.value:
                     commit_message += ' and explainer'
+            else:
+                # TODO: read existing reference.json and check if its a blob url or image
+                # if blob url then require explainer_type else set explainer_type as custom
+                explainer_type = explainer_type if explainer_type else ExplainerType.NO_EXPLAINER.value
 
             logging.info('Committing and pushing the result to the remote.')
             commit_sha = git_service.commit(commit_message)
@@ -247,10 +330,22 @@ class Client(object):
             'example_output': options.example_output,
             'model_type': model_type,
             'model_serverless': options.model_serverless,
+            'model_instance_type': options.model_instance_type,
+            'model_cpu_limit': options.model_cpu_limit,
+            'model_cpu_request': options.model_cpu_request,
+            'model_mem_limit': options.model_mem_limit,
+            'model_mem_request': options.model_mem_request,
             'commit': commit_sha,
             'commit_message': commit_message,
             'explainer_type': explainer_type,
             'explainer_serverless': options.explainer_serverless,
+            'explainer_instance_type': options.explainer_instance_type,
+            'explainer_cpu_limit': options.explainer_cpu_limit,
+            'explainer_cpu_request': options.explainer_cpu_request,
+            'explainer_mem_limit': options.explainer_mem_limit,
+            'explainer_mem_request': options.explainer_mem_request,
+            'prediction_method': options.prediction_method,
+            'contract_path': contract_path,
         }
 
         update_options = self.__remove_null_values(update_options)
@@ -410,8 +505,7 @@ class Client(object):
             data['featureLabels'] = featureLabels
 
         if file_exists(path) and not overwrite:
-            raise Exception(
-                'The file %s already exists. Pass \'overwrite=True\' to overwrite contents.' % path)
+            pass
         else:
             try:
                 with open(path, 'w') as f:
@@ -491,23 +585,26 @@ class Client(object):
 
     def __process_model(self, model, options: DeployOptions or UpdateOptions,
                         local_repository_path: str, git_service: GitService,
-                        overwrite: bool, contract_path: str) -> ModelWrapper:
+                        overwrite: bool, contract_path: str) -> ModelType:
         logging.info('Saving the model to disk...')
-        model_wrapper = ModelWrapper(
-            model,
-            pytorch_model_file_path=options.pytorch_model_file_path,
-            pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
-        self.__prepare_model_directory(git_service, local_repository_path, contract_path, overwrite)
         model_folder = os.path.join(
             local_repository_path, contract_path, 'model')
-        model_wrapper.save(model_folder)
-        blob_storage_link = self.__upload_folder_to_blob(
-            local_repository_path, model_folder)
-        shutil.rmtree(model_folder)
-        os.mkdir(model_folder)
-        self.__create_reference_file(model_folder, blob_storage_link)
-        git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
-        return model_wrapper
+        model_wrapper = None
+        if model:
+            model_wrapper = ModelWrapper(
+                model,
+                pytorch_model_file_path=options.pytorch_model_file_path,
+                pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
+            model_wrapper.save(model_folder)
+            self.__prepare_model_directory(
+                git_service, local_repository_path, contract_path, overwrite)
+            blob_storage_link = self.__upload_folder_to_blob(
+                local_repository_path, model_folder)
+            shutil.rmtree(model_folder)
+            os.mkdir(model_folder)
+            self.__create_reference_file(model_folder, blob_storage_link)
+            git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
+        return model_wrapper.get_model_type() if model else ModelType.CUSTOM
 
     def __process_explainer(self, explainer, git_service: GitService,
                             local_repository_path: str, overwrite: bool,

@@ -15,8 +15,20 @@ class UpdateDeployment(BaseModel):
     contract_path: Optional[str]
     model_type: Optional[Any]
     model_serverless: Optional[bool] = False
+    model_instance_type: Optional[str]
+    model_cpu_limit: Optional[float]
+    model_cpu_request:  Optional[float]
+    model_mem_limit: Optional[int]
+    model_mem_request: Optional[int]
     explainer_type: Optional[Any]
     explainer_serverless: Optional[bool] = False
+    explainer_instance_type: Optional[str]
+    explainer_instance_type: Optional[str]
+    explainer_cpu_limit: Optional[float]
+    explainer_cpu_request:  Optional[float]
+    explainer_mem_limit: Optional[int]
+    explainer_mem_request: Optional[int]
+    prediction_method: Optional[str] = None
 
     def to_request_body(self) -> Dict:
         request_body = {
@@ -29,8 +41,19 @@ class UpdateDeployment(BaseModel):
             'contractPath': self.contract_path,
             'modelType': self.model_type,
             'modelServerless': self.model_serverless,
+            'modelInstanceType': self.model_instance_type,
+            'modelCpuLimit': self.model_cpu_limit,
+            'modelCpuRequest': self.model_cpu_request,
+            'modelMemLimit': self.model_mem_limit,
+            'modelMemRequest': self.model_mem_request,
             'explainerType': self.explainer_type,
             'explainerServerless': self.explainer_serverless,
+            'explainerInstanceType': self.explainer_instance_type,
+            'explainerCpuLimit': self.explainer_cpu_limit,
+            'explainerCpuRequest': self.explainer_cpu_request,
+            'explainerMemLimit': self.explainer_mem_limit,
+            'explainerMemRequest': self.explainer_mem_request,
+            'predictionMethod': self.prediction_method
         }
         request_body = {k: v for k, v in request_body.items()
                         if v is not None}

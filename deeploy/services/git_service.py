@@ -62,7 +62,7 @@ class GitService(object):
     def pull(self) -> None:
         """Pull from the default remote repository
         """
-        self.remote.pull(ff_only=True)
+        self.remote.pull(self.branch, ff_only=True)
         return
 
     def push(self) -> None:

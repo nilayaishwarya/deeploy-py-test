@@ -5,6 +5,9 @@ loaders:
       - deeploy
       - deeploy.deeploy
       - deeploy.models.deploy_options
+      - deeploy.models.update_options
+      - deeploy.enums.model_type
+      - deeploy.enums.explainer_type
 processors:
   - type: filter
     exclude_private: true
@@ -36,6 +39,9 @@ renderer:
       contents:
         - 'deeploy.deeploy.*'
         - 'deeploy.models.deploy_options.*'
+        - 'deeploy.models.update_options.*'
+        - 'deeploy.enums.model_type.*'
+        - 'deeploy.enums.explainer_type.*'
   mkdocs_config:
     repo_url: https://gitlab.com/deeploy-ml/deeploy-python-client
     docs_dir: content
