@@ -2,7 +2,7 @@ from typing import Optional, List, Any
 
 from pydantic import BaseModel
 
-from models import DockerReference, BlobReference
+from deeploy.models.model_reference_json import BlobReference, DockerReference
 
 
 class DeployOptions(BaseModel):
@@ -14,27 +14,27 @@ class DeployOptions(BaseModel):
     model_serverless = False
     """bool, optional: whether to deploy the model in a serverless fashion. Defaults to False"""  # noqa
     model_instance_type: Optional[str]
-    """str, optional: The preferred instance type for the model pod.""" # noqa
+    """str, optional: The preferred instance type for the model pod."""  # noqa
     model_cpu_limit: Optional[float]
-    """float, optional: CPU limit of model pod, in CPUs.""" # noqa
+    """float, optional: CPU limit of model pod, in CPUs."""  # noqa
     model_cpu_request:  Optional[float]
-    """float, optional: CPU request of model pod, in CPUs.""" # noqa
+    """float, optional: CPU request of model pod, in CPUs."""  # noqa
     model_mem_limit: Optional[int]
-    """int, optional: RAM limit of model pod, in Megabytes.""" # noqa
+    """int, optional: RAM limit of model pod, in Megabytes."""  # noqa
     model_mem_request: Optional[int]
-    """int, optional: RAM request of model pod, in Megabytes.""" # noqa
+    """int, optional: RAM request of model pod, in Megabytes."""  # noqa
     explainer_serverless = False
     """bool, optional: whether to deploy the model in a serverless fashion. Defaults to False"""  # noqa
     explainer_instance_type: Optional[str]
-    """str, optional: The preferred instance type for the model pod.""" # noqa  
+    """str, optional: The preferred instance type for the model pod."""  # noqa
     explainer_cpu_limit: Optional[float]
-    """float, optional: CPU limit of model pod, in CPUs.""" # noqa
+    """float, optional: CPU limit of model pod, in CPUs."""  # noqa
     explainer_cpu_request:  Optional[float]
-    """float, optional: CPU request of model pod, in CPUs.""" # noqa
+    """float, optional: CPU request of model pod, in CPUs."""  # noqa
     explainer_mem_limit: Optional[int]
-    """int, optional: RAM limit of model pod, in Megabytes.""" # noqa
+    """int, optional: RAM limit of model pod, in Megabytes."""  # noqa
     explainer_mem_request: Optional[int]
-    """int, optional: RAM request of model pod, in Megabytes.""" # noqa
+    """int, optional: RAM request of model pod, in Megabytes."""  # noqa
     description: Optional[str]
     """str, optional: the description of the deployment"""  # noqa
     example_input: Optional[List[Any]]
@@ -53,12 +53,12 @@ class DeployOptions(BaseModel):
     modelDockerConfig: Optional[DockerReference] = None
     """DockerReference: docker configuration object of the model"""  # noqa
     modelBlobConfig: Optional[BlobReference] = None
-    """BlobReference: blob configuration object of the explainer""" # noqa
+    """BlobReference: blob configuration object of the explainer"""  # noqa
     explainerDockerConfig: Optional[DockerReference] = None
     """DockerReference: docker configuration object of the explainer"""  # noqa
     explainerBlobConfig: Optional[BlobReference] = None
     """BlobReference: blob configuration object of the explainer"""  # noqa
     prediction_method: Optional[str] = None
-    """str: Whether to use predict or predict_proba.""" # noqa
+    """str: Whether to use predict or predict_proba."""  # noqa
     custom_id: Optional[str] = None
     """str: Name of the custom id"""
