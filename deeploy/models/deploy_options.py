@@ -60,5 +60,5 @@ class DeployOptions(BaseModel):
     """BlobReference: blob configuration object of the explainer"""  # noqa
     prediction_method: Optional[str] = None
     """str: Whether to use predict or predict_proba.""" # noqa
-    custom_tags: Optional[str] = None
-    """str: Name of the custom tag"""
+    custom_id: Optional[str] = None
+    """str: Name of the custom id"""

@@ -194,6 +194,7 @@ class Client(object):
             'explainer_mem_request': options.explainer_mem_request,
             'prediction_method': options.prediction_method,
             'contract_path': contract_path,
+            'tags': { 'primary': options.custom_id, 'secondary': [] },
         }
 
         deployment = self.__deeploy_service.create_deployment(
