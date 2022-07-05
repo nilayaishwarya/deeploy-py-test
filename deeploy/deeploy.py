@@ -445,13 +445,14 @@ class Client(object):
             provider = path_tokens[2]
             user = path_tokens[3]
             path = path_tokens[4:]
-            ssh_link = "git@" + provider + ":" + user
+            link = "git@" + provider + ":" + user
             for sub_directory in path:
-                ssh_link += "/" + sub_directory
+                link += "/" + sub_directory
         else:
-            ssh_link = None
-
-        return ssh_link
+            # ssh to https
+            path_tokens = remote_path.split('@')
+            link = "https://" + path_tokens[1].replace(':', '/')
+        return link
 
     def __prepare_model_directory(self, git_service: GitService, local_repository_path: str,
                                   contract_path: str, overwrite) -> None:
