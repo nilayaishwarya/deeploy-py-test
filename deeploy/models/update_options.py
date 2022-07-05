@@ -46,7 +46,7 @@ class UpdateOptions(BaseModel):
     """str, optional: absolute or relative path to the .py file containing the pytorch model class definition"""  # noqa
     pytorch_torchserve_handler_name: Optional[str]
     """str, optional: TorchServe handler name. One of 
-        ['image_classifier', 'image_classifier', 'object_detector', 'text_classifier']. 
+        ['image_classifier', 'image_segmenter', 'object_detector', 'text_classifier']. 
         See the [TorchServe documentation](https://github.com/pytorch/serve/blob/master/docs/default_handlers.md#torchserve-default-inference-handlers)
         for more info."""  # noqa
     prediction_method: Optional[int] = None
