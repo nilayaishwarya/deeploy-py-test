@@ -441,6 +441,7 @@ class Client(object):
 
     def __parse_url_ssh_to_https(self, remote_path: str) -> str or None:
         if (remote_path[:4] != 'git@'):
+            # https to ssh
             path_tokens = remote_path.split('/')
             provider = path_tokens[2]
             user = path_tokens[3]

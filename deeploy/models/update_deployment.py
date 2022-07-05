@@ -28,7 +28,7 @@ class UpdateDeployment(BaseModel):
     explainer_cpu_request:  Optional[float]
     explainer_mem_limit: Optional[int]
     explainer_mem_request: Optional[int]
-    prediction_method: Optional[str] = None
+    prediction_method: Optional[Any] = None
 
     def to_request_body(self) -> Dict:
         request_body = {

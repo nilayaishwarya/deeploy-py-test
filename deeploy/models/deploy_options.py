@@ -72,5 +72,5 @@ class DeployOptions(BaseModel):
     """str: url of the explainer's blob storage location""" # noqa
     explainerBlobCredentialsId: Optional[str] = None
     """str: credentials id of the explainer's blob storage"""  # noqa
-    prediction_method: Optional[str] = None
-    """str: Whether to use predict or predict_proba.""" # noqa
+    prediction_method: Optional[int] = None
+    """str: Whether to use predict (0) or predict_proba (1) for SKLearn and XGBoost deployments.""" # noqa
