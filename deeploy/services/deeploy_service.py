@@ -240,6 +240,19 @@ class DeeployService(object):
             else:
                 raise Exception('Failed to request evaluation.')
 
+    def actuals(self, workspace_id: str, deployment_id: str, actuals_input: dict) -> None:
+        url = "%s/v2/workspaces/%s/deployments/%s/actuals" % (
+            self.__host, workspace_id, deployment_id)
+
+        actuals_response = requests.put(
+            url, json=actuals_input,
+            headers=self.__get_auth_header(AuthType.TOKEN))
+        if not self.__request_is_successful(actuals_response):
+            if actuals_response.status_code == 401:
+                raise Exception('No permission to perform this action.')
+            else:
+                raise Exception('Failed to submit actuals.')
+
     def __keys_are_valid(self) -> bool:
         host_for_testing = '%s/v2/workspaces' % self.__host
 

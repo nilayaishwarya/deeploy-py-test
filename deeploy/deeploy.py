@@ -395,6 +395,21 @@ class Client(object):
                                         request_log_id, prediction_log_id,
                                         evaluation_input)
 
+    def actuals(self, deployment_id: str, actuals_input: dict) -> None:
+        """Evaluate a prediction log
+        Parameters:
+            deployment_id (str): ID of the Deeploy deployment
+            actuals_input (dict): Object with predictionIds and actualsValues
+                                 where the order of the values will match
+                                 predictions with the actuals
+                                 {
+                                    "predictionIds": [],
+                                    "actualValues": {"predictions" | "output": []}
+                                 }
+        """
+        workspace_id = self.__config.workspace_id
+        self.__deeploy_service.actuals(workspace_id, deployment_id, actuals_input)
+
     def __are_clientoptions_valid(self, config: ClientConfig) -> bool:
         """Check if the supplied options are valid
         """
