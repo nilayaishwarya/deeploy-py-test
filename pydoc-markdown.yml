@@ -31,8 +31,8 @@ renderer:
       source: docs/markdown/deploy.md
     - title: Infer
       source: docs/markdown/infer.md
-    - title: Validate
-      source: docs/markdown/validate.md
+    - title: Evaluate
+      source: docs/markdown/evaluate.md
     # - title: Examples
     #   source: docs/markdown/examples.md
     - title: API Reference

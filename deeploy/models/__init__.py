@@ -8,6 +8,6 @@ from .workspace import Workspace  # noqa
 from .deploy_options import DeployOptions  # noqa
 from .update_options import UpdateOptions  # noqa
 from .prediction import V1Prediction, V2Prediction  # noqa
-from .prediction_log import PredictionLog  # noqa
-from .prediction_logs import PredictionLogs  # noqa
+from .prediction_log import RequestLog, PredictionLog  # noqa
+from .prediction_logs import RequestLogs, PredictionLogs  # noqa
 from .model_reference_json import ModelReferenceJson, BlobReference, DockerReference  # noqa

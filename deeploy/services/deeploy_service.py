@@ -5,7 +5,7 @@ import requests
 from pydantic import parse_obj_as
 
 from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, \
-    V1Prediction, V2Prediction, PredictionLog, PredictionLogs, UpdateDeployment, \
+    V1Prediction, V2Prediction, RequestLog, PredictionLog, RequestLogs, PredictionLogs, UpdateDeployment, \
     UpdateDeploymentMetadata
 from deeploy.enums import PredictionVersion, AuthType
 
@@ -181,26 +181,24 @@ class DeeployService(object):
         explanation = explanation_response.json()
         return explanation
 
-    def getOneLog(self, workspace_id: str, deployment_id: str, log_id: str) -> PredictionLog:
-        url = '%s/v2/workspaces/%s/deployments/%s/logs/%s' % (
-            self.__host, workspace_id, deployment_id, log_id)
-        params = {
-            'logId': log_id
-        }
+    def getOnePredictionLog(self, workspace_id: str, deployment_id: str, request_log_id: str,
+                            prediction_log_id: str) -> PredictionLog:
+        url = '%s/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (
+            self.__host, workspace_id, deployment_id, request_log_id, prediction_log_id)
 
         log_response = requests.get(
-            url, params=params, headers=self.__get_auth_header(AuthType.ALL))
+            url, headers=self.__get_auth_header(AuthType.ALL))
 
         if not self.__request_is_successful(log_response):
-            raise Exception('Failed to get log %s.' % log_id)
+            raise Exception('Failed to get log %s.' % prediction_log_id)
 
         log = parse_obj_as(PredictionLog, log_response.json())
         return log
 
-    def getLogs(self, workspace_id: str, deployment_id: str) -> PredictionLogs:
-        url = '%s/v2/workspaces/%s/deployments/%s/logs' % (self.__host,
-                                                           workspace_id,
-                                                           deployment_id)
+    def getPredictionLogs(self, workspace_id: str, deployment_id: str) -> PredictionLogs:
+        url = '%s/v2/workspaces/%s/deployments/%s/predictionLogs' % (self.__host,
+                                                                     workspace_id,
+                                                                     deployment_id)
 
         logs_response = requests.get(
             url, headers=self.__get_auth_header(AuthType.ALL))
@@ -210,24 +208,37 @@ class DeeployService(object):
         logs = parse_obj_as(PredictionLogs, logs_response.json())
         return logs
 
-    def validate(self, workspace_id: str, deployment_id: str, log_id: str,
-                 validation_input: dict) -> None:
-        url = "%s/v2/workspaces/%s/deployments/%s/logs/%s/validations" % (
-            self.__host, workspace_id, deployment_id, log_id)
+    def getRequestLogs(self, workspace_id: str, deployment_id: str) -> RequestLogs:
+        url = '%s/v2/workspaces/%s/deployments/%s/requestLogs' % (self.__host,
+                                                                  workspace_id,
+                                                                  deployment_id)
 
-        if ((validation_input['result'] == 0) and ('value' in validation_input)):
+        logs_response = requests.get(
+            url, headers=self.__get_auth_header(AuthType.ALL))
+
+        if not self.__request_is_successful(logs_response):
+            raise Exception('Failed to get logs.')
+        logs = parse_obj_as(RequestLogs, logs_response.json())
+        return logs
+
+    def evaluate(self, workspace_id: str, deployment_id: str, request_log_id: str, prediction_log_id: str,
+                 evaluation_input: dict) -> None:
+        url = "%s/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s/validations" % (
+            self.__host, workspace_id, deployment_id, request_log_id, prediction_log_id)
+
+        if ((evaluation_input['result'] == 0) and ('value' in evaluation_input)):
             raise Exception('An overrule value can not be provided when confirming the inference.')
 
-        validation_response = requests.post(
-            url, json=validation_input,
+        evaluation_response = requests.post(
+            url, json=evaluation_input,
             headers=self.__get_auth_header(AuthType.TOKEN))
-        if not self.__request_is_successful(validation_response):
-            if validation_response.status_code == 409:
-                raise Exception('Log has already been validated.')
-            elif validation_response.status_code == 401:
+        if not self.__request_is_successful(evaluation_response):
+            if evaluation_response.status_code == 409:
+                raise Exception('Log has already been evaluated.')
+            elif evaluation_response.status_code == 401:
                 raise Exception('No permission to perform this action.')
             else:
-                raise Exception('Failed to request validation.')
+                raise Exception('Failed to request evaluation.')
 
     def __keys_are_valid(self) -> bool:
         host_for_testing = '%s/v2/workspaces' % self.__host

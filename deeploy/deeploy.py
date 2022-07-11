@@ -12,8 +12,8 @@ from deeploy.models.model_reference_json import BlobReference, DockerReference
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from deeploy.models import ClientConfig, Deployment, CreateDeployment, UpdateDeployment, \
-    DeployOptions, UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, \
-    PredictionLogs, UpdateDeploymentMetadata
+    DeployOptions, UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, RequestLog, \
+    PredictionLog, RequestLogs, PredictionLogs, UpdateDeploymentMetadata, prediction_log
 from deeploy.enums import ExplainerType, ModelType
 from deeploy.common.functions import delete_all_contents_in_directory, directory_exists, \
     directory_empty, file_exists
@@ -351,35 +351,49 @@ class Client(object):
             workspace_id, deployment_id, request_body, image)
         return explanation
 
-    def getLogs(self, deployment_id: str) -> PredictionLogs:
-        """Retrieve logs
+    def getRequestLogs(self, deployment_id: str) -> RequestLogs:
+        """Retrieve request logs
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
         """
         workspace_id = self.__config.workspace_id
-        logs = self.__deeploy_service.getLogs(workspace_id, deployment_id)
-        return logs
+        requestLogs = self.__deeploy_service.getRequestLogs(workspace_id, deployment_id)
+        return requestLogs
 
-    def getOneLog(self, deployment_id: str, log_id: str) -> PredictionLog:
+    def getPredictionLogs(self, deployment_id: str) -> PredictionLogs:
+        """Retrieve prediction logs
+        Parameters:
+            deployment_id (str): ID of the Deeploy deployment
+        """
+        workspace_id = self.__config.workspace_id
+        predictionLogs = self.__deeploy_service.getPredictionLogs(workspace_id, deployment_id)
+        return predictionLogs
+
+    def getOnePredictionLog(self, deployment_id: str, request_log_id: str,
+                            prediction_log_id: str) -> PredictionLog:
         """Retrieve one log
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
-            log_id (str): ID of the log to be retrieved
+            request_log_id (str): ID of the request_log containing the prediction
+            prediction_log_id (str): ID of the prediction_log to be retrieved
         """
         workspace_id = self.__config.workspace_id
-        log = self.__deeploy_service.getOneLog(workspace_id, deployment_id, log_id)
-        return log
+        predictionLog = self.__deeploy_service.getOnePredictionLog(workspace_id, deployment_id,
+                                                                   request_log_id, prediction_log_id)
+        return predictionLog
 
-    def validate(self, deployment_id: str, log_id: str, validation_input: dict) -> None:
-        """Validate a log
+    def evaluate(self, deployment_id: str, request_log_id: str, prediction_log_id: str,
+        evaluation_input: dict) -> None:
+        """Evaluate a prediction log
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
-            log_id (int): ID of the log to be validated
-            validation_input: Dict with result, value, and explanation
+            log_id (int): ID of the log to be evaluated
+            evaluation_input: Dict with result, value, and explanation
         """
         workspace_id = self.__config.workspace_id
-        self.__deeploy_service.validate(workspace_id, deployment_id,
-                                        log_id, validation_input)
+        self.__deeploy_service.evaluate(workspace_id, deployment_id,
+                                        request_log_id, prediction_log_id,
+                                        evaluation_input)
 
     def __are_clientoptions_valid(self, config: ClientConfig) -> bool:
         """Check if the supplied options are valid
