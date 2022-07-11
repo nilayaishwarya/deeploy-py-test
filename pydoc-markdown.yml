@@ -29,10 +29,12 @@ renderer:
       source: docs/markdown/configuration.md
     - title: Deploy
       source: docs/markdown/deploy.md
-    - title: Infer
+    - title: Predictions and Explanations
       source: docs/markdown/infer.md
     - title: Evaluate
       source: docs/markdown/evaluate.md
+    - title: Actuals
+      source: docs/markdown/actuals.md
     # - title: Examples
     #   source: docs/markdown/examples.md
     - title: API Reference
@@ -42,6 +44,7 @@ renderer:
         - 'deeploy.models.update_options.*'
         - 'deeploy.enums.model_type.*'
         - 'deeploy.enums.explainer_type.*'
+        - 'deeploy.models.model_reference_json.*'
   mkdocs_config:
     repo_url: https://gitlab.com/deeploy-ml/deeploy-python-client
     docs_dir: content
