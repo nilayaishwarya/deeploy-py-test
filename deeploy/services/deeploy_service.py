@@ -250,7 +250,7 @@ class DeeployService(object):
         return False
 
     def __token_is_valid(self, workspace_id, deployment_id) -> bool:
-        host_for_testing = '%s/v2/workspaces/%s/deployments/%s/logs' % (
+        host_for_testing = '%s/v2/workspaces/%s/deployments/%s/requestLogs' % (
             self.__host, workspace_id, deployment_id)
         headers = {'Authorization': 'Bearer ' + self.__token}
         logs_response = requests.get(
