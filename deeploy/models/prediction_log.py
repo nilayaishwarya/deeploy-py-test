@@ -14,6 +14,7 @@ class RequestLog(BaseModel):
     createdAt: str
     predictionLogs: Optional[Dict]
 
+
 class PredictionLog(BaseModel):
     id: str
     requestBody: Optional[Dict]

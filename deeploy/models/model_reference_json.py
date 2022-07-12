@@ -9,13 +9,16 @@ class DockerReference(BaseModel):
     port: Optional[int]
     credentialsId: Optional[str]
 
+
 class BlobReference(BaseModel):
     url: str
     credentialsId: Optional[str]
 
+
 class ModelReference(BaseModel):
     docker: Optional[DockerReference]
     blob: Optional[BlobReference]
+
 
 class ModelReferenceJson(BaseModel):
     reference: ModelReference

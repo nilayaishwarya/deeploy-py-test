@@ -1,11 +1,12 @@
 <div align="center">
 
-<a href="https://deeploy.ml"><img src="./docs/content/img/logo-letters.png" width="250px"></a>
+<a href="https://deeploy.ml"><img src="./docs/content/img/Logo%20(original).png" width="250px"></a>
 
-**Deeploy - Thoughtful Machine Learning Ops**
+**Deeploy - Making Machine Learning Explainable**
 
-</br>Human involvement is essential in successful ML deployments. 
-</br>Deeploy standardizes Deployment, Monitoring and Explainability of ML models.
+</br>Easily deploy and update ML models.
+</br>Explain model decisions to everyone
+</br>Improve model performance with a human feedback.
 
 [![PyPi license](https://img.shields.io/pypi/l/deeploy.svg?color=blue)](https://img.shields.io/pypi/l/deeploy.svg?color=blue)
 [![PyPI version shields.io](https://img.shields.io/pypi/v/deeploy.svg)](https://img.shields.io/pypi/v/deeploy.svg)
@@ -16,6 +17,6 @@
 ---
 ## Deeploy Python Client
 
-Python client for interacting with Deeploy.
+Python client for interacting with Deeploy. This client for the Deeploy Core product is build to simplify communication with the Deeploy API from your (local) python environment.
 
 Documenation for this Python module can be found [here](https://deeploy-ml.gitlab.io/deeploy-python-client/).

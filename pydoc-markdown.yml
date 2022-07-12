@@ -25,8 +25,8 @@ renderer:
       source: docs/markdown/index.md
     - title: Getting started
       source: docs/markdown/getting-started.md
-    - title: Configuration
-      source: docs/markdown/configuration.md
+    - title: Authentication
+      source: docs/markdown/auth.md
     - title: Deploy
       source: docs/markdown/deploy.md
     - title: Predictions and Explanations

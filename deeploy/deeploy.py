@@ -12,8 +12,8 @@ from deeploy.models.model_reference_json import BlobReference, DockerReference
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from deeploy.models import ClientConfig, Deployment, CreateDeployment, UpdateDeployment, \
-    DeployOptions, UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, RequestLog, \
-    PredictionLog, RequestLogs, PredictionLogs, UpdateDeploymentMetadata, prediction_log
+    DeployOptions, UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, \
+    PredictionLog, RequestLogs, PredictionLogs, UpdateDeploymentMetadata
 from deeploy.enums import ExplainerType, ModelType
 from deeploy.common.functions import delete_all_contents_in_directory, directory_exists, \
     directory_empty, file_exists
@@ -383,7 +383,7 @@ class Client(object):
         return predictionLog
 
     def evaluate(self, deployment_id: str, request_log_id: str, prediction_log_id: str,
-        evaluation_input: dict) -> None:
+                 evaluation_input: dict) -> None:
         """Evaluate a prediction log
         Parameters:
             deployment_id (str): ID of the Deeploy deployment

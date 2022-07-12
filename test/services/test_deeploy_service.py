@@ -252,7 +252,7 @@ def test_getRequestLogs(deeploy_service):
              "requestContentType": "application/json",
              "responseTimeMS": 26,
              "statusCode": 500,
-             "tokenId": "b6d8c781-2526-4e03-9b43-4c1a62d064db"
+             "tokenId": "b6d8c781-2526-4e03-9b43-4c1a62d064db",
              "createdAt": "2021-05-06T15:36:07.597Z",
              "predictionLogs": {}}], "count": 1
     }
@@ -263,10 +263,10 @@ def test_getRequestLogs(deeploy_service):
                 **{"id": "bac4848a-e7bd-4af6-821d-2e384dc016cc",
                    "deploymentId": "ccadb1a1-9036-418c-9936-3f7ac6c4ec8c",
                    "commit": "4c1a62d",
-                   "requestContentType": "application/json"
+                   "requestContentType": "application/json",
                    "responseTimeMS": 26,
                    "statusCode": 500,
-                   "tokenId": "b6d8c781-2526-4e03-9b43-4c1a62d064db"
+                   "tokenId": "b6d8c781-2526-4e03-9b43-4c1a62d064db",
                    "createdAt": "2021-05-06T15:36:07.597Z",
                    "predictionLogs": {}})],
             "count": 1})

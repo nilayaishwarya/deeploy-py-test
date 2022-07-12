@@ -5,7 +5,7 @@ import requests
 from pydantic import parse_obj_as
 
 from deeploy.models import Deployment, Repository, CreateDeployment, Workspace, \
-    V1Prediction, V2Prediction, RequestLog, PredictionLog, RequestLogs, PredictionLogs, UpdateDeployment, \
+    V1Prediction, V2Prediction, PredictionLog, RequestLogs, PredictionLogs, UpdateDeployment, \
     UpdateDeploymentMetadata
 from deeploy.enums import PredictionVersion, AuthType
 
