@@ -106,6 +106,10 @@ client.deploy(
     local_repository_path='myPath',
     )
 ```
+**Update**
+```
+from deeploy import UpdateOptions, BlobReference
+from deeploy.enums import ModelType
 
 **Update**
 ```
