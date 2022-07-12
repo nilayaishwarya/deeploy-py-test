@@ -5,75 +5,14 @@
 Download the latest version by running:
 
 ```bash
-pip3 install deeploy
+pip install deeploy
 ```
 
-## Deploy flows
 
-There are multiple paths that can be followed in order to create a new deployment.
+## Initializing the Deeploy python client
+In order to initialize the Python client you need a [personal key pair](https://deeploy-ml.zendesk.com/hc/en-150/articles/6505862346386-Personal-key-pairs) (account level access) or [deployment API token](https://deeploy-ml.zendesk.com/hc/en-150/articles/360021070580-Integrating-a-Deployment) (deployment level access), the domain of you Deeploy installation and a [workspace id](https://deeploy-ml.zendesk.com/knowledge/articles/360019010659/en-150?brand_id=360002003940&return_to=%2Fhc%2Fen-150%2Farticles%2F360019010659). You will need your Deeploy installation to retrieve these details.
 
-`Model and explainer variables (*)`
-When passing a model and/or explainer to the deploy function the client will update the reference.json files in the repository or create new reference.json files if they do not yet exist.
-
-```
-from deeploy import DeployOptions
-from deeploy.enums import ModelType
-
-deploy_options = DeployOptions(**{
-        'name': 'My Deployment Name',
-        'description': 'My Deployment Description'
-    })
-    
-client.deploy(
-    options=deploy_options, 
-    overwrite=True, 
-    model_type=ModelType.PYTORCH.value, 
-    local_repository_path='myPath', 
-    model=myPytorchModel)
-```
-
-`Blob storage locations and custom Docker images (*)`
-By passing access credentials to a blob storage location or Docker image it is possible to upload models and explainers that are stored as a file in a blob storage location or as a custom Docker image. This approach will update the reference.json files in the repository or create new reference.json files if they do not yet exist.
-
-```
-from deeploy import DeployOptions
-from deeploy.enums import ModelType
-
-deploy_options = DeployOptions(**{
-        'modelBlobReferenceUrl': myUrl,
-    })
-
-client.deploy(
-    options=deploy_options, 
-    overwrite=True, 
-    model_type=ModelType.PYTORCH.value, 
-    local_repository_path='myPath',
-    )
-```
-
-`Existing reference.json files`
-Creating a deployment from existing reference.json files requires passing a model and/or explainer type unless it is a custom Docker image.
-
-```
-from deeploy import DeployOptions
-from deeploy.enums import ModelType
-
-deploy_options = DeployOptions(**{
-        'name': 'My Deployment Name',
-        'description': 'My Deployment Description'
-    })
-
-client.deploy(
-    options=deploy_options, 
-    model_type=ModelType.PYTORCH.value, 
-    local_repository_path='myPath')
-```
-
-*Only possible when the argument `overwrite` is set to True, otherwise the client will use the existing reference.json files to create the deployment.
-
-## Deploying a model
-
-Initialise the `Client`:
+Use the following code to initialise the Deeploy `Client`:
 
 ```python
 from deeploy import Client, DeployOptions
@@ -87,40 +26,26 @@ client_options = {
 client = Client(**client_options)
 ```
 
-Train a model and explainer
+## Model and explainer Frameworks
+Deeploy support the following model frameworks with pre-build model images to make mode deployments easy:
+* **Models**
+  * [Scikit-Learn](https://pypi.org/project/scikit-learn/0.20.3/)
+  * [XGBoost](https://pypi.org/project/xgboost/0.82/)
+  * [LightGBM](https://pypi.org/project/lightgbm/2.3.1/)
+  * [PyTorch](https://pypi.org/project/torch/1.3.1/)
+  * [Tensorflow](https://pypi.org/project/tensorflow/2.2.2/)
+* **Explainers**
+  * [Anchors](https://pypi.org/project/alibi/0.4.0/)
+  * [Shap Kernel](https://pypi.org/project/shap/0.36.0/)
 
-```python
-import sklearn
-import shap
+For more information see [here](https://deeploy-ml.zendesk.com/hc/en-150/articles/4411974086162-Recommended-Framework-Versions)
 
-# prepare the dataset
-X,y = shap.datasets.adult()
-X_display,y_display = shap.datasets.adult(display=True)
-X_train, X_valid, y_train, y_valid = sklearn.model_selection.train_test_split(X, y, test_size=0.2, random_state=7)
+## Up next
+The Python client currently includes the following functionality:
+* [Create and update deployments](deploy.md)
+* [Request predictions and explanations from a deployment API](infer.md)
+* [Evaluate predictions](evaluate.md)
+* [Submit actuals for predictions](actuals.md)
 
-# train the model
-knn = sklearn.neighbors.KNeighborsClassifier()
-knn.fit(X_train, y_train)
 
-# create the explainer
-f = lambda x: knn.predict_proba(x)[:,1]
-med = X_train.median().values.reshape((1,X_train.shape[1]))
-explainer = shap.KernelExplainer(f, med)
-```
-
-And finally, deploy the model and explainer on Deeploy:
-
-```python
-deploy_options = {
-    'model': knn, 
-    'options': DeployOptions(**{
-        'name': 'Client example',
-        'model_serverless': False,
-        'explainer_serverless': True,
-        'description': 'This is an example model deployed with the Python client',
-    }), 
-    'explainer': explainer,
-    'overwrite': True,
-}
-client.deploy(**deploy_options)
-```
+For more infromation about authentication check this [section](auth.md)
