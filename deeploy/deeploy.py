@@ -8,11 +8,12 @@ import json
 
 from pydantic import parse_obj_as
 from git import Repo
+from deeploy.models.model_reference_json import BlobReference, DockerReference
 
 from deeploy.services import DeeployService, GitService, ModelWrapper, ExplainerWrapper
 from deeploy.models import ClientConfig, Deployment, CreateDeployment, UpdateDeployment, \
-    DeployOptions, UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, PredictionLog, \
-    PredictionLogs, UpdateDeploymentMetadata
+    DeployOptions, UpdateOptions, V1Prediction, V2Prediction, ModelReferenceJson, \
+    PredictionLog, RequestLogs, PredictionLogs, UpdateDeploymentMetadata
 from deeploy.enums import ExplainerType, ModelType
 from deeploy.common.functions import delete_all_contents_in_directory, directory_exists, \
     directory_empty, file_exists
@@ -100,57 +101,34 @@ class Client(object):
         git_service.pull()
         logging.info('Successfully pulled from the remote repository.')
 
-        if options.modelDockerImage:
-            model_type = ModelType.CUSTOM
-            self.__prepare_model_directory(git_service, local_repository_path, overwrite)
-            model_folder = os.path.join(
-                local_repository_path, contract_path, 'model')
-            shutil.rmtree(model_folder)
-            os.mkdir(model_folder)
-            self.__create_reference_file(
-                model_folder, options.modelBlobReferenceUrl,
-                options.modelDockerImage, options.modelDockerPort,
-                options.modelDockerCredentialsId, options.modelBlobCredentialsId,
-                options.modelDockerUri)
-            git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
-        elif options.modelBlobReferenceUrl and model_type:
-            model_type = model_type
-            self.__prepare_model_directory(git_service, local_repository_path, overwrite)
-            model_folder = os.path.join(
-                local_repository_path, contract_path, 'model')
-            shutil.rmtree(model_folder)
-            os.mkdir(model_folder)
-            self.__create_reference_file(
-                model_folder, options.modelBlobReferenceUrl,
-                options.modelDockerImage, options.modelDockerPort,
-                options.modelDockerCredentialsId, options.modelBlobCredentialsId,
-                options.modelDockerUri)
-            git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
-        elif model:
+        model_folder = os.path.join(
+            local_repository_path, contract_path, 'model')
+        explainer_folder = os.path.join(
+            local_repository_path, contract_path, 'explainer')
+
+        if model:
             model_type = self.__process_model(
                 model, options, local_repository_path, git_service, overwrite, contract_path).value
+            commit = True
+        elif options.modelDockerConfig or options.modelBlobConfig:
+            if options.modelDockerConfig:
+                model_type = ModelType.CUSTOM.value
+            elif options.modelBlobConfig:
+                model_type = model_type
+            self.__prepare_model_directory(git_service, local_repository_path, overwrite)
+            shutil.rmtree(model_folder)
+            os.mkdir(model_folder)
+            self.__create_reference_file(
+                model_folder, options.modelDockerConfig, options.modelBlobConfig)
+            git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
+            commit = True
         else:
-            self.__process_model(
-                model, options, local_repository_path, git_service, overwrite, contract_path)
             reference_path = os.path.join(
                 local_repository_path, contract_path, 'model', 'reference.json')
             if not os.path.exists(reference_path):
                 raise Exception('Missing model reference file in repository.')
 
-            try:
-                with open(reference_path) as referenceFile:
-                    data = json.load(referenceFile)
-                    if 'reference' in data:
-                        if "blob" in data['reference']:
-                            model_type = model_type
-                        elif "docker" in data['reference']:
-                            model_type = ModelType.CUSTOM.value
-                        else:
-                            raise Exception('No information on to be deployed model available.')
-                    else:
-                        raise Exception('No information on to be deployed model available.')
-            except IOError:
-                raise Exception('Failed to deploy model from reference.json file.')
+            self.__get_reference_type(reference_path)
 
         commit_message = '[Deeploy Client] Add new model'
 
@@ -158,8 +136,12 @@ class Client(object):
             explainer_type = self.__process_explainer(
                 explainer, local_repository_path, git_service, overwrite, contract_path)
             commit_message += ' and explainer'
-        elif options.explainerBlobReferenceUrl or options.explainerDockerImage:
-            explainer_type = ExplainerType.CUSTOM
+            commit = True
+        elif options.explainerDockerConfig or options.explainerBlobConfig:
+            if options.explainerDockerConfig:
+                explainer_type = ModelType.CUSTOM.value
+            elif options.explainerBlobConfig:
+                explainer_type = explainer_type
             self.__prepare_explainer_directory(
                 git_service, local_repository_path, overwrite, contract_path)
             explainer_folder = os.path.join(
@@ -167,30 +149,15 @@ class Client(object):
             shutil.rmtree(explainer_folder)
             os.mkdir(explainer_folder)
             self.__create_reference_file(
-                explainer_folder, options.explainerBlobReferenceUrl,
-                options.explainerDockerImage, options.explainerDockerPort,
-                options.explainerDockerCredentialsId, options.explainerBlobCredentialsId,
-                options.explainerDockerUri)
+                explainer_folder, options.explainerDockerConfig, options.explainerBlobConfig)
             git_service.add_folder_to_staging(os.path.join(contract_path, 'explainer'))
             commit_message += ' and explainer'
+            commit = True
         else:
             reference_path = os.path.join(
                 local_repository_path, contract_path, 'explainer', 'reference.json')
 
-            try:
-                with open(reference_path) as referenceFile:
-                    data = json.load(referenceFile)
-                    if 'reference' in data:
-                        if "blob" in data['reference']:
-                            explainer_type = explainer_type
-                        elif "docker" in data['reference']:
-                            explainer_type = ExplainerType.CUSTOM.value
-                        else:
-                            raise Exception('No information on to be deployed explainer available.')
-                    else:
-                        raise Exception('No information on to be deployed explainer available.')
-            except IOError:
-                explainer_type = ExplainerType.NO_EXPLAINER.value
+            explainer_type = self.__get_reference_type(reference_path)
 
         metadata_path = os.path.join(local_repository_path, contract_path, 'metadata.json')
         self.__prepare_metadata_file(metadata_path, options.feature_labels, overwrite)
@@ -227,6 +194,7 @@ class Client(object):
             'explainer_mem_request': options.explainer_mem_request,
             'prediction_method': options.prediction_method,
             'contract_path': contract_path,
+            'tags': {'primary': options.custom_id, 'secondary': []},
         }
 
         deployment = self.__deeploy_service.create_deployment(
@@ -383,35 +351,64 @@ class Client(object):
             workspace_id, deployment_id, request_body, image)
         return explanation
 
-    def getLogs(self, deployment_id: str) -> PredictionLogs:
-        """Retrieve logs
+    def getRequestLogs(self, deployment_id: str) -> RequestLogs:
+        """Retrieve request logs
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
         """
         workspace_id = self.__config.workspace_id
-        logs = self.__deeploy_service.getLogs(workspace_id, deployment_id)
-        return logs
+        requestLogs = self.__deeploy_service.getRequestLogs(workspace_id, deployment_id)
+        return requestLogs
 
-    def getOneLog(self, deployment_id: str, log_id: str) -> PredictionLog:
+    def getPredictionLogs(self, deployment_id: str) -> PredictionLogs:
+        """Retrieve prediction logs
+        Parameters:
+            deployment_id (str): ID of the Deeploy deployment
+        """
+        workspace_id = self.__config.workspace_id
+        predictionLogs = self.__deeploy_service.getPredictionLogs(workspace_id, deployment_id)
+        return predictionLogs
+
+    def getOnePredictionLog(self, deployment_id: str, request_log_id: str,
+                            prediction_log_id: str) -> PredictionLog:
         """Retrieve one log
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
-            log_id (str): ID of the log to be retrieved
+            request_log_id (str): ID of the request_log containing the prediction
+            prediction_log_id (str): ID of the prediction_log to be retrieved
         """
         workspace_id = self.__config.workspace_id
-        log = self.__deeploy_service.getOneLog(workspace_id, deployment_id, log_id)
-        return log
+        predictionLog = self.__deeploy_service.getOnePredictionLog(workspace_id, deployment_id,
+                                                                   request_log_id, prediction_log_id)
+        return predictionLog
 
-    def validate(self, deployment_id: str, log_id: str, validation_input: dict) -> None:
-        """Validate a log
+    def evaluate(self, deployment_id: str, request_log_id: str, prediction_log_id: str,
+                 evaluation_input: dict) -> None:
+        """Evaluate a prediction log
         Parameters:
             deployment_id (str): ID of the Deeploy deployment
-            log_id (int): ID of the log to be validated
-            validation_input: Dict with result, value, and explanation
+            log_id (int): ID of the log to be evaluated
+            evaluation_input: Dict with result, value, and explanation
         """
         workspace_id = self.__config.workspace_id
-        self.__deeploy_service.validate(workspace_id, deployment_id,
-                                        log_id, validation_input)
+        self.__deeploy_service.evaluate(workspace_id, deployment_id,
+                                        request_log_id, prediction_log_id,
+                                        evaluation_input)
+
+    def actuals(self, deployment_id: str, actuals_input: dict) -> None:
+        """Evaluate a prediction log
+        Parameters:
+            deployment_id (str): ID of the Deeploy deployment
+            actuals_input (dict): Object with predictionIds and actualsValues
+                                 where the order of the values will match
+                                 predictions with the actuals
+                                 {
+                                    "predictionIds": [],
+                                    "actualValues": {"predictions" | "output": []}
+                                 }
+        """
+        workspace_id = self.__config.workspace_id
+        self.__deeploy_service.actuals(workspace_id, deployment_id, actuals_input)
 
     def __are_clientoptions_valid(self, config: ClientConfig) -> bool:
         """Check if the supplied options are valid
@@ -441,17 +438,19 @@ class Client(object):
 
     def __parse_url_ssh_to_https(self, remote_path: str) -> str or None:
         if (remote_path[:4] != 'git@'):
+            # https to ssh
             path_tokens = remote_path.split('/')
             provider = path_tokens[2]
             user = path_tokens[3]
             path = path_tokens[4:]
-            ssh_link = "git@" + provider + ":" + user
+            link = "git@" + provider + ":" + user
             for sub_directory in path:
-                ssh_link += "/" + sub_directory
+                link += "/" + sub_directory
         else:
-            ssh_link = None
-
-        return ssh_link
+            # ssh to https
+            path_tokens = remote_path.split('@')
+            link = "https://" + path_tokens[1].replace(':', '/')
+        return link
 
     def __prepare_model_directory(self, git_service: GitService, local_repository_path: str,
                                   contract_path: str, overwrite) -> None:
@@ -555,23 +554,21 @@ class Client(object):
             return {k: v for k, v in ((k, self.__remove_null_values(v))
                     for k, v in d.items()) if not empty(v)}
 
-    def __create_reference_file(self, local_folder_path: str, blob_storage_link: str = None,
-                                docker_image: str = None, docker_image_port: int = None,
-                                docker_credentials: str = None, blob_credentials: str = None,
-                                docker_uri: str = None) -> None:
+    def __create_reference_file(self, local_folder_path: str, dockerReference: DockerReference = None,
+                                blobReference: BlobReference = None) -> None:
         file_path = os.path.join(local_folder_path, 'reference.json')
 
         reference_json = {
             'reference': {
                 'docker': {
-                    'image': docker_image,
-                    'uri': docker_uri,
-                    'credentialsId': docker_credentials,
-                    'port': docker_image_port,
+                    'image': dockerReference.docker_image,
+                    'uri': dockerReference.docker_uri,
+                    'credentialsId': dockerReference.docker_credentials,
+                    'port': dockerReference.docker_image_port,
                 },
                 'blob': {
-                    'url': blob_storage_link,
-                    'credentialsId': blob_credentials,
+                    'url': blobReference.blob_storage_link,
+                    'credentialsId': blobReference.blob_credentials,
                 },
             },
         }
@@ -589,22 +586,20 @@ class Client(object):
         logging.info('Saving the model to disk...')
         model_folder = os.path.join(
             local_repository_path, contract_path, 'model')
-        model_wrapper = None
-        if model:
-            model_wrapper = ModelWrapper(
-                model,
-                pytorch_model_file_path=options.pytorch_model_file_path,
-                pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
-            model_wrapper.save(model_folder)
-            self.__prepare_model_directory(
-                git_service, local_repository_path, contract_path, overwrite)
-            blob_storage_link = self.__upload_folder_to_blob(
-                local_repository_path, model_folder)
-            shutil.rmtree(model_folder)
-            os.mkdir(model_folder)
-            self.__create_reference_file(model_folder, blob_storage_link)
-            git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
-        return model_wrapper.get_model_type() if model else ModelType.CUSTOM
+        model_wrapper = ModelWrapper(
+            model,
+            pytorch_model_file_path=options.pytorch_model_file_path,
+            pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
+        model_wrapper.save(model_folder)
+        self.__prepare_model_directory(
+            git_service, local_repository_path, contract_path, overwrite)
+        blob_storage_link = self.__upload_folder_to_blob(
+            local_repository_path, model_folder)
+        shutil.rmtree(model_folder)
+        os.mkdir(model_folder)
+        self.__create_reference_file(model_folder, blob_storage_link)
+        git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
+        return model_wrapper.get_model_type()
 
     def __process_explainer(self, explainer, git_service: GitService,
                             local_repository_path: str, overwrite: bool,
@@ -622,3 +617,19 @@ class Client(object):
         self.__create_reference_file(explainer_folder, blob_storage_link)
         git_service.add_folder_to_staging(os.path.join(contract_path, 'explainer'))
         return explainer_wrapper
+
+    def __get_reference_type(reference_path: str, type: int) -> int:
+        try:
+            with open(reference_path) as referenceFile:
+                data = json.load(referenceFile)
+                if 'reference' in data:
+                    if "blob" in data['reference']:
+                        return type
+                    elif "docker" in data['reference']:
+                        return ExplainerType.CUSTOM.value
+                    else:
+                        raise Exception('No information on to be deployed explainer available.')
+                else:
+                    raise Exception('No information on to be deployed explainer available.')
+        except IOError:
+            return ExplainerType.NO_EXPLAINER.value

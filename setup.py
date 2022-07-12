@@ -20,8 +20,8 @@ setuptools.setup(
     description='The official Deeploy client for Python',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    author='Matthijs Hulsebos',
-    author_email='mhulsebos@deeploy.ml',
+    author='Tim Kleinloog',
+    author_email='opensource@deeploy.ml',
     packages=setuptools.find_packages(),
     url="https://gitlab.com/deeploy-ml/deeploy-python-client",
     project_urls={

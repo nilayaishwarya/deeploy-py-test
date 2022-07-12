@@ -2,7 +2,7 @@ import pytest
 import requests_mock
 
 from deeploy.services import DeeployService
-from deeploy.models import Repository, Deployment, CreateDeployment, V1Prediction, V2Prediction, PredictionLog, PredictionLogs
+from deeploy.models import Repository, Deployment, CreateDeployment, V1Prediction, V2Prediction, RequestLog, PredictionLog, RequestLogs
 from deeploy.enums import ModelType, ExplainerType
 
 WORKSPACE_ID = 'abc'
@@ -243,88 +243,93 @@ def test_explain(deeploy_service):
                 workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body, image=True)
 
 
-def test_getLogs(deeploy_service):
+def test_getRequestLogs(deeploy_service):
     return_object = {
         "data": [
             {"id": "bac4848a-e7bd-4af6-821d-2e384dc016cc",
              "deploymentId": "ccadb1a1-9036-418c-9936-3f7ac6c4ec8c",
-             "requestBody": {},
-             "responseBody": {},
+             "commit": "4c1a62d",
+             "requestContentType": "application/json",
              "responseTimeMS": 26,
              "statusCode": 500,
+             "tokenId": "b6d8c781-2526-4e03-9b43-4c1a62d064db",
              "createdAt": "2021-05-06T15:36:07.597Z",
-             "predictionValidation": {}}], "count": 1
+             "predictionLogs": {}}], "count": 1
     }
 
-    expected_output = PredictionLogs(
+    expected_output = RequestLogs(
         **{"data": [
-            PredictionLog(
+            RequestLog(
                 **{"id": "bac4848a-e7bd-4af6-821d-2e384dc016cc",
                    "deploymentId": "ccadb1a1-9036-418c-9936-3f7ac6c4ec8c",
-                   "requestBody": {},
-                   "responseBody": {},
+                   "commit": "4c1a62d",
+                   "requestContentType": "application/json",
                    "responseTimeMS": 26,
                    "statusCode": 500,
+                   "tokenId": "b6d8c781-2526-4e03-9b43-4c1a62d064db",
                    "createdAt": "2021-05-06T15:36:07.597Z",
-                   "predictionValidation": {}})],
+                   "predictionLogs": {}})],
             "count": 1})
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/logs' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
+        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
               json=return_object)
-        logs = deeploy_service.getLogs(workspace_id=WORKSPACE_ID,
-                                       deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4')
+        logs = deeploy_service.getRequestLogs(workspace_id=WORKSPACE_ID,
+                                              deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4')
         assert logs == expected_output
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/logs' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
+        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
               status_code=400)
         with pytest.raises(Exception):
-            deeploy_service.getLogs(workspace_id=WORKSPACE_ID,
-                                    deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4')
+            deeploy_service.getRequestLogs(workspace_id=WORKSPACE_ID,
+                                           deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4')
 
 
-def test_getOneLog(deeploy_service):
+def test_getOnePredictionLog(deeploy_service):
     return_object = {
         "id": "bac4848a-e7bd-4af6-821d-2e384dc016cc",
-        "deploymentId": "ccadb1a1-9036-418c-9936-3f7ac6c4ec8c",
         "requestBody": {},
+        "requestBodyBlobLink": '',
         "responseBody": {},
-        "responseTimeMS": 26,
-        "statusCode": 500,
+        "requestLog": {},
+        "predictionValidation": {},
+        "actual": {},
         "createdAt": "2021-05-06T15:36:07.597Z",
-        "predictionValidation": {}
+        "predictionValidation": {},
+        "tags": {'primary': None, 'secondary': []}
     }
 
     expected_output = PredictionLog(
-        **{"id": "bac4848a-e7bd-4af6-821d-2e384dc016cc",
-            "deploymentId": "ccadb1a1-9036-418c-9936-3f7ac6c4ec8c",
+        **{ "id": "bac4848a-e7bd-4af6-821d-2e384dc016cc",
             "requestBody": {},
+            "requestBodyBlobLink": '',
             "responseBody": {},
-            "responseTimeMS": 26,
-            "statusCode": 500,
+            "requestLog": {},
+            "predictionValidation": {},
+            "actual": {},
             "createdAt": "2021-05-06T15:36:07.597Z",
-            "predictionValidation": {}})
+            "tags": {'primary': None, 'secondary': []}})
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/logs/%s' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc'),
+        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
               json=return_object)
-        log = deeploy_service.getOneLog(
-            workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', log_id='abc')
+        log = deeploy_service.getOnePredictionLog(
+            workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_log_id='abc', prediction_log_id='abc')
         assert log == expected_output
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/logs/%s' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc'),
+        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
               status_code=400)
         with pytest.raises(Exception):
-            deeploy_service.getOneLog(
-                workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', log_id='abc')
+            deeploy_service.getOnePredictionLog(
+                workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_log_id='abc', prediction_log_id='abc')
 
 
-def test_validate(deeploy_service: DeeployService):
+def test_evaluate(deeploy_service: DeeployService):
     with requests_mock.Mocker() as m:
-        m.post("https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/logs/%s/validations" % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc'),
+        m.post("https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s/validations" % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
                status_code=401)
         with pytest.raises(Exception):
-            deeploy_service.validate(
-                workspace_id='abc', deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', log_id='abc', validation_input={})
+            deeploy_service.evaluate(
+                workspace_id='abc', deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_log_id='abc', prediction_log_id='abc', validation_input={})
