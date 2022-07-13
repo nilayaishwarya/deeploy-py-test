@@ -7,7 +7,7 @@ There are multiple routes that can be followed in order to create or update a ne
 </p>
 
 ### Preparation
-In order to deploy models, you need Personal Access Keys. For more information regarding authentication, see [Authentication](auth.md).
+In order to deploy models, you need Personal Access Keys. For more information regarding authentication, see [Authentication](https://deeploy-ml.gitlab.io/deeploy-python-client/authentication/).
 
 Another part of the preparation is gettin familiar with the repository contract that Deeploy uses, you can find more information about that [here](https://deeploy-ml.zendesk.com/hc/en-150/articles/4411887195666-Preparing-a-repository).
 
@@ -15,8 +15,8 @@ Another part of the preparation is gettin familiar with the repository contract 
 Creating a deployment or updating from existing reference.json files requires passing a model and/or explainer type unless it is a custom Docker image.
 
 **Create deployment**
-- See [here](api-reference/#deeploy.models.deploy_options) for all update arguments.
-- See [here](api-reference/#deploy) for all update arguments.
+- See [here](https://deeploy-ml.gitlab.io/deeploy-python-client/api-reference/#deeploy.models.deploy_options) for all update arguments.
+- See [here](https://deeploy-ml.gitlab.io/deeploy-python-client/api-reference/#deploy) for all update arguments.
 ```
 from deeploy import DeployOptions
 from deeploy.enums import ModelType
@@ -33,9 +33,10 @@ client.deploy(
     model_type=ModelType.PYTORCH.value,
     local_repository_path='myPath')
 ```
+
 **Update**
-- See [here](api-reference.md/#deeploy.models.update_options) for all update arguments.
-- See [here](api-reference.md/#update) for all update arguments.
+- See [here](https://deeploy-ml.gitlab.io/deeploy-python-client/api-reference/#deeploy.models.update_options) for all update arguments.
+- See [here](https://deeploy-ml.gitlab.io/deeploy-python-client/api-reference/#update) for all update arguments.
 ```
 from deeploy import UpdateOptions
 from deeploy.enums import ModelType
@@ -57,7 +58,7 @@ client.update(
 This approach will update the reference.json files in the repository or create new reference.json files if they do not yet exist.
 
 **Create deployment**
-- See [here](api-reference.md/#deeploy.models.model_reference_json) for all blob reference arguments.
+- See [here](https://deeploy-ml.gitlab.io/deeploy-python-client/api-reference/#deeploy.models.model_reference_json) for all blob reference arguments.
 ```
 from deeploy import DeployOptions, BlobReference
 from deeploy.enums import ModelType
@@ -106,11 +107,6 @@ client.deploy(
     local_repository_path='myPath',
     )
 ```
-**Update**
-```
-from deeploy import UpdateOptions, BlobReference
-from deeploy.enums import ModelType
-
 **Update**
 ```
 from deeploy import UpdateOptions, BlobReference
