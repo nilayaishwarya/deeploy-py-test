@@ -26,5 +26,15 @@ request_body = {
 }
 
 prediction = client.predict(deployment_id, request_body)
-explanation = client.predict(deployment_id, request_body)
+explanation = client.explain(deployment_id, request_body)
 ```
+
+> **Note:** with the current [pre-build explainer images](https://deeploy-ml.zendesk.com/hc/en-150/articles/4411974086162-Recommended-Framework-Versions) it is not possible to do semi-batch predictions (i.e. multiple predictions per request). See below for a example request body:
+> ```
+> request_body = {
+>    "instances": [
+>        [39, 7, 1, 1, 1, 1, 4, 1, 2174, 0, 40, 9],
+>        [51, 7, 1, 1, 1, 1, 4, 1, 2174, 0, 40, 8],
+>    ]
+> }
+> ```

@@ -8,6 +8,7 @@ loaders:
       - deeploy.models.update_options
       - deeploy.enums.model_type
       - deeploy.enums.explainer_type
+      - deeploy.models.model_reference_json
 processors:
   - type: filter
     exclude_private: true

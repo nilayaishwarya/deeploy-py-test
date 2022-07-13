@@ -27,25 +27,27 @@ client = Client(**client_options)
 ```
 
 ## Model and explainer Frameworks
-Deeploy support the following model frameworks with pre-build model images to make mode deployments easy:
-* **Models**
-  * [Scikit-Learn](https://pypi.org/project/scikit-learn/0.20.3/)
-  * [XGBoost](https://pypi.org/project/xgboost/0.82/)
-  * [LightGBM](https://pypi.org/project/lightgbm/2.3.1/)
-  * [PyTorch](https://pypi.org/project/torch/1.3.1/)
-  * [Tensorflow](https://pypi.org/project/tensorflow/2.2.2/)
-* **Explainers**
-  * [Anchors](https://pypi.org/project/alibi/0.4.0/)
-  * [Shap Kernel](https://pypi.org/project/shap/0.36.0/)
+Deeploy support the following model frameworks with pre-build model and explainer images to make mode deployments easy:
+- **Models**
+  - [Scikit-Learn](https://pypi.org/project/scikit-learn/0.20.3/)
+  - [XGBoost](https://pypi.org/project/xgboost/0.82/)
+  - [LightGBM](https://pypi.org/project/lightgbm/2.3.1/)
+  - [PyTorch](https://pypi.org/project/torch/1.3.1/)
+  - [Tensorflow](https://pypi.org/project/tensorflow/2.2.2/)
+- **Explainers**
+  - [Anchors](https://pypi.org/project/alibi/0.4.0/)
+  - [Shap Kernel](https://pypi.org/project/shap/0.36.0/)
 
 For more information see [here](https://deeploy-ml.zendesk.com/hc/en-150/articles/4411974086162-Recommended-Framework-Versions)
 
+Next to prebuild images Deeploy also support custom model and explainer images. For more information about custome Docker deployments we recommend to start [here](https://deeploy-ml.zendesk.com/hc/en-150/articles/4406047508370-Deploying-Custom-Docker-Images). In the depoy section of the documentation an example is shown.
+
 ## Up next
 The Python client currently includes the following functionality:
-* [Create and update deployments](deploy.md)
-* [Request predictions and explanations from a deployment API](infer.md)
-* [Evaluate predictions](evaluate.md)
-* [Submit actuals for predictions](actuals.md)
+- [Create and update deployments](deploy.md)
+- [Request predictions and explanations from a deployment API](infer.md)
+- [Evaluate predictions](evaluate.md)
+- [Submit actuals for predictions](actuals.md)
 
 
 For more infromation about authentication check this [section](auth.md)
