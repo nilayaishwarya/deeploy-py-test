@@ -11,3 +11,4 @@ class ModelType(Enum):
     ONNX = 4
     TRITON = 5
     CUSTOM = 6
+    LIGHTGBM = 7
