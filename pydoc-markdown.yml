@@ -60,6 +60,7 @@ renderer:
       - stylesheets/extra.css
     markdown_extensions:
       - codehilite
+      - def_list
       - toc:
           permalink: true
           toc_depth: 3

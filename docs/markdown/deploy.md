@@ -3,7 +3,7 @@
 There are multiple routes that can be followed in order to create or update a new deployment. Below a schematic overview is shown of the available scenarios from the Deeploy client.
 
 <p align="left">
-    <img align="left" src="./img/deeploy-routes.png" width="250px" />
+    <img align="left" src="./docs/content/img/deeploy-routes.png" width="250px" />
 </p>
 
 ### Preparation
