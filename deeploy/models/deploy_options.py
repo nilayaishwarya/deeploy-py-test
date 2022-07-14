@@ -42,7 +42,13 @@ class DeployOptions(BaseModel):
     example_output: Optional[List[Any]]
     """List, optional: list of example output for the model"""  # noqa
     feature_labels: Optional[List[str]]
-    """List, optional: list of feature labels for the explanations"""  # noqa
+    """List, optional: list of feature labels as deployment metadata"""  # noqa
+    prediction_classes: Optional[dict]
+    """dict, optional: dict to map class labels to values,
+        class label : value as deployment metadata"""  # noqa
+    problem_type: Optional[str]
+    """str, optional: model problem type classification or regression
+        as deployment metadata"""  # noqa
     pytorch_model_file_path: Optional[str]
     """str, optional: absolute or relative path to the .py file containing the pytorch model class definition"""  # noqa
     pytorch_torchserve_handler_name: Optional[str]
@@ -50,13 +56,13 @@ class DeployOptions(BaseModel):
         ['image_classifier', 'image_segmenter', 'object_detector', 'text_classifier'].
         See the [TorchServe documentation](https://github.com/pytorch/serve/blob/master/docs/default_handlers.md#torchserve-default-inference-handlers)
         for more info."""  # noqa
-    modelDockerConfig: Optional[DockerReference] = None
+    model_docker_config: Optional[DockerReference] = None
     """DockerReference: docker configuration object of the model"""  # noqa
-    modelBlobConfig: Optional[BlobReference] = None
+    model_blob_config: Optional[BlobReference] = None
     """BlobReference: blob configuration object of the explainer"""  # noqa
-    explainerDockerConfig: Optional[DockerReference] = None
+    explainer_docker_config: Optional[DockerReference] = None
     """DockerReference: docker configuration object of the explainer"""  # noqa
-    explainerBlobConfig: Optional[BlobReference] = None
+    explainer_blob_config: Optional[BlobReference] = None
     """BlobReference: blob configuration object of the explainer"""  # noqa
     prediction_method: Optional[int] = None
     """str: Whether to use predict (0) or predict_proba (1) for SKLearn and XGBoost deployments.""" # noqa

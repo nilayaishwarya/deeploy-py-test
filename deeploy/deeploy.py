@@ -63,8 +63,9 @@ class Client(object):
 
     def deploy(self, options: DeployOptions, local_repository_path: str,
                model: Any = None, explainer: Any = None, model_type: int = None,
-               explainer_type: int = None, overwrite: bool = False,
-               commit_message: str = None, contract_path: str = "") -> Deployment:
+               explainer_type: int = None, overwrite_contract: bool = False,
+               overwrite_metadata: bool = False, commit_message: str = None,
+               contract_path: str = "") -> Deployment:
         """Deploy a model on Deeploy
         Parameters:
             model (Any): The class instance of an ML model
@@ -75,8 +76,10 @@ class Client(object):
             explainer (Any, optional): The class instance of an optional model explainer
             model_type (int, optional): model type enum from ModelType class
             explainer_type (int, optional): mopel type enum from ExplainerType class
-            overwrite (bool, optional): Whether or not to overwrite files that are in the
+            overwrite_contract (bool, optional): Whether or not to overwrite files that are in the
                 'model' and 'explainer' folders in the git folder. Defaults to False
+            overwrite_metadata (bool, optional): Whether or not to overwrite the metadata.json
+                file. Defaults to False.
             commit_message (str, optional): Commit message to use
             contract_path (str, optional): Relative repository subpath that contains the
                 Deeploy contract to deploy from
@@ -101,25 +104,26 @@ class Client(object):
         git_service.pull()
         logging.info('Successfully pulled from the remote repository.')
 
-        model_folder = os.path.join(
-            local_repository_path, contract_path, 'model')
-        explainer_folder = os.path.join(
-            local_repository_path, contract_path, 'explainer')
-
         if model:
             model_type = self.__process_model(
-                model, options, local_repository_path, git_service, overwrite, contract_path).value
+                model, options, local_repository_path, git_service, overwrite_contract,
+                contract_path).value
             commit = True
-        elif options.modelDockerConfig or options.modelBlobConfig:
-            if options.modelDockerConfig:
-                model_type = ModelType.CUSTOM.value
-            elif options.modelBlobConfig:
-                model_type = model_type
-            self.__prepare_model_directory(git_service, local_repository_path, overwrite)
+        elif options.model_docker_config or options.model_blob_config:
+            self.__prepare_model_directory(
+                git_service, local_repository_path, contract_path, overwrite_contract)
+            model_folder = os.path.join(
+                local_repository_path, contract_path, 'model')
             shutil.rmtree(model_folder)
             os.mkdir(model_folder)
-            self.__create_reference_file(
-                model_folder, options.modelDockerConfig, options.modelBlobConfig)
+            if options.model_docker_config:
+                model_type = ModelType.CUSTOM.value
+                self.__create_reference_file(
+                    model_folder, dockerReference=options.model_docker_config)
+            elif options.model_blob_config:
+                model_type = model_type
+                self.__create_reference_file(
+                    model_folder, blobReference=options.model_blob_config)
             git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
             commit = True
         else:
@@ -130,28 +134,31 @@ class Client(object):
 
             self.__get_reference_type(reference_path)
 
-        commit_message = '[Deeploy Client] Add new model'
+        commit_message = '[Deeploy Client] Add new model' if not commit_message else commit_message
 
         if explainer:
             explainer_type = self.__process_explainer(
-                explainer, local_repository_path, git_service, overwrite, contract_path)
-            commit_message += ' and explainer'
+                explainer, local_repository_path, git_service, overwrite_contract,
+                contract_path)
+            commit_message += ' and explainer' if not commit_message else ''
             commit = True
-        elif options.explainerDockerConfig or options.explainerBlobConfig:
-            if options.explainerDockerConfig:
-                explainer_type = ModelType.CUSTOM.value
-            elif options.explainerBlobConfig:
-                explainer_type = explainer_type
+        elif options.explainer_docker_config or options.explainer_blob_config:
             self.__prepare_explainer_directory(
-                git_service, local_repository_path, overwrite, contract_path)
+                git_service, local_repository_path, contract_path, overwrite_contract)
             explainer_folder = os.path.join(
                 local_repository_path, contract_path, 'explainer')
             shutil.rmtree(explainer_folder)
             os.mkdir(explainer_folder)
-            self.__create_reference_file(
-                explainer_folder, options.explainerDockerConfig, options.explainerBlobConfig)
+            if options.explainer_docker_config:
+                explainer_type = ModelType.CUSTOM.value
+                self.__create_reference_file(
+                    explainer_folder, dockerReference=options.explainer_docker_config)
+            elif options.explainer_blob_config:
+                explainer_type = explainer_type
+                self.__create_reference_file(
+                    explainer_folder, blobReference=options.explainer_blob_config)
             git_service.add_folder_to_staging(os.path.join(contract_path, 'explainer'))
-            commit_message += ' and explainer'
+            commit_message += ' and explainer' if not commit_message else ''
             commit = True
         else:
             reference_path = os.path.join(
@@ -160,7 +167,8 @@ class Client(object):
             explainer_type = self.__get_reference_type(reference_path)
 
         metadata_path = os.path.join(local_repository_path, contract_path, 'metadata.json')
-        self.__prepare_metadata_file(metadata_path, options.feature_labels, overwrite)
+        self.__prepare_metadata_file(metadata_path, options.feature_labels, options.problem_type,
+                                     options.prediction_classes, overwrite_metadata)
         git_service.add_folder_to_staging(os.path.join(contract_path, 'metadata.json'))
 
         if commit:
@@ -204,8 +212,8 @@ class Client(object):
 
     def update(self, options: UpdateOptions, local_repository_path: str = None,
                model: Any = None, explainer: Any = None, model_type: int = None,
-               explainer_type: int = None, overwrite: bool = False,
-               commit: str = None, commit_message: str = None,
+               explainer_type: int = None, overwrite_contract: bool = False,
+               overwrite_metadata: bool = False, commit_sha: str = None, commit_message: str = None,
                contract_path: str = "") -> Deployment:
         """Update a model on Deeploy
         Parameters:
@@ -217,9 +225,11 @@ class Client(object):
             explainer (Any, optional): The class instance of an optional model explainer
             model_type (int, optional): model type enum from ModelType class
             explainer_type (int, optional): mopel type enum from ExplainerType class
-            overwrite (bool, optional): Whether or not to overwrite files that are in the
+            overwrite_contract (bool, optional): Whether or not to overwrite files that are in the
                 'model' and 'explainer' folders in the git folder. Defaults to False
-            commit (str, optional): Commit SHA to update to
+            overwrite_metadata (bool, optional): Whether or not to overwrite the metadata.json
+                file. Defaults to False.
+            commit_sha (str, optional): Commit SHA to update to
             commit_message (str, optional): Commit message to use
             contract_path (str, optional): Relative repository subpath that contains the
                 Deeploy contract to deploy from
@@ -233,10 +243,12 @@ class Client(object):
                 'Deployment was not found in the Deeploy workspace. \
                  Make sure the Deployment Id is correct.')
 
+        git_service = GitService(local_repository_path)
+
         current_deployment = self.__deeploy_service.get_deployment(
             self.__config.workspace_id, options.deployment_id)
 
-        commit_sha = None
+        commit = False
 
         if (model or explainer):
             if (local_repository_path is None):
@@ -244,7 +256,6 @@ class Client(object):
                     'Local repository path is required to update \
                      the model or explainer.')
             else:
-                git_service = GitService(local_repository_path)
                 repository_in_workspace, repository_id = \
                     self.__is_git_repository_in_workspace(git_service)
 
@@ -255,15 +266,16 @@ class Client(object):
 
             self.__config.repository_id = repository_id
 
+            commit = True
             logging.info('Pulling from the remote repository...')
             git_service.pull()
             logging.info('Successfully pulled from the remote repository.')
 
             if model:
                 model_wrapper = self.__process_model(
-                    model, options, local_repository_path, git_service, overwrite, contract_path)
+                    model, options, local_repository_path, git_service, overwrite_contract, contract_path)
                 model_type = model_wrapper.get_model_type().value
-                commit_message = '[Deeploy Client] Add new model'
+                commit_message = '[Deeploy Client] Add new model' if not commit_message else commit_message
             else:
                 # TODO: read existing reference.json and check if its a blob url or image
                 # if blob url then require model_type else set model_type as custom
@@ -271,21 +283,65 @@ class Client(object):
 
             if explainer:
                 explainer_wrapper = self.__process_explainer(
-                    explainer, git_service, local_repository_path, overwrite, contract_path)
+                    explainer, git_service, local_repository_path, overwrite_contract, contract_path)
                 explainer_type = explainer_wrapper.get_explainer_type().value
                 if explainer_type != ExplainerType.NO_EXPLAINER.value:
-                    commit_message += ' and explainer'
+                    commit_message += ' and explainer' if not commit_message else ''
             else:
                 # TODO: read existing reference.json and check if its a blob url or image
                 # if blob url then require explainer_type else set explainer_type as custom
                 explainer_type = explainer_type if explainer_type else ExplainerType.NO_EXPLAINER.value
 
+        # process model reference.json
+        elif options.model_docker_config or options.model_blob_config:
+            self.__prepare_model_directory(
+                git_service, local_repository_path, contract_path, overwrite_contract)
+            model_folder = os.path.join(
+                local_repository_path, contract_path, 'model')
+            shutil.rmtree(model_folder)
+            os.mkdir(model_folder)
+            if options.model_docker_config:
+                model_type = ModelType.CUSTOM.value
+                self.__create_reference_file(
+                    model_folder, dockerReference=options.model_docker_config)
+            elif options.model_blob_config:
+                model_type = model_type
+                self.__create_reference_file(
+                    model_folder, blobReference=options.model_blob_config)
+            git_service.add_folder_to_staging(os.path.join(contract_path, 'model'))
+            commit = True
+
+        # process explainer reference.json
+        elif options.explainer_docker_config or options.explainer_blob_config:
+            self.__prepare_explainer_directory(
+                git_service, local_repository_path, contract_path, overwrite_contract)
+            explainer_folder = os.path.join(
+                local_repository_path, contract_path, 'explainer')
+            shutil.rmtree(explainer_folder)
+            os.mkdir(explainer_folder)
+            if options.explainer_docker_config:
+                explainer_type = ModelType.CUSTOM.value
+                self.__create_reference_file(
+                    explainer_folder, dockerReference=options.explainer_docker_config)
+            elif options.explainer_blob_config:
+                explainer_type = explainer_type
+                self.__create_reference_file(
+                    explainer_folder, blobReference=options.explainer_blob_config)
+            git_service.add_folder_to_staging(os.path.join(contract_path, 'explainer'))
+            commit_message += ' and explainer' if not commit_message else ''
+            commit = True
+
+        metadata_path = os.path.join(local_repository_path, contract_path, 'metadata.json')
+        self.__prepare_metadata_file(metadata_path, options.feature_labels, options.problem_type,
+                                     options.prediction_classes, overwrite_metadata)
+        git_service.add_folder_to_staging(os.path.join(contract_path, 'metadata.json'))
+
+        if commit:
             logging.info('Committing and pushing the result to the remote.')
             commit_sha = git_service.commit(commit_message)
             git_service.push()
-
-        if commit:
-            commit_sha = commit
+        else:
+            commit_sha = Repo(local_repository_path).head.commit.hexsha if commit_sha is None else commit_sha
 
         self.__config.repository_id = current_deployment.active_version['repositoryId']
 
@@ -453,7 +509,7 @@ class Client(object):
         return link
 
     def __prepare_model_directory(self, git_service: GitService, local_repository_path: str,
-                                  contract_path: str, overwrite) -> None:
+                                  contract_path: str, overwrite_contract) -> None:
         model_folder_path = os.path.join(
             local_repository_path, contract_path, 'model')
         if not directory_exists(model_folder_path):
@@ -463,7 +519,7 @@ class Client(object):
                 logging.error("Creation of the directory %s failed" %
                               model_folder_path)
         elif not directory_empty(model_folder_path):
-            if not overwrite:
+            if not overwrite_contract:
                 raise Exception(
                     'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' %
                     model_folder_path)
@@ -474,7 +530,7 @@ class Client(object):
         return
 
     def __prepare_explainer_directory(self, git_service: GitService, local_repository_path: str,
-                                      contract_path: str, overwrite) -> None:
+                                      contract_path: str, overwrite_contract) -> None:
         explainer_folder_path = os.path.join(
             local_repository_path, contract_path, 'explainer')
         if not directory_exists(explainer_folder_path):
@@ -484,7 +540,7 @@ class Client(object):
                 logging.error("Creation of the directory %s failed" %
                               explainer_folder_path)
         elif not directory_empty(explainer_folder_path):
-            if not overwrite:
+            if not overwrite_contract:
                 raise Exception(
                     'The folder %s is not empty. Pass \'overwrite=True\' to overwrite contents.' %
                     explainer_folder_path)
@@ -494,16 +550,23 @@ class Client(object):
             pass
         return
 
-    def __prepare_metadata_file(self, path: str, featureLabels=None,
-                                overwrite=False) -> None:
+    def __prepare_metadata_file(self, path: str, feature_labels=None,
+                                problem_type=None, prediction_classes=None,
+                                overwrite_metadata=False) -> None:
         data = {
-            'featureLabels': []
+            'featureLabels': [],
+            'problemType': {},
+            'predictionClasses': ''
         }
 
-        if featureLabels:
-            data['featureLabels'] = featureLabels
+        if feature_labels:
+            data['featureLabels'] = feature_labels
+        if problem_type:
+            data['problemType'] = problem_type
+        if prediction_classes:
+            data['predictionClasses'] = prediction_classes
 
-        if file_exists(path) and not overwrite:
+        if file_exists(path) and not overwrite_metadata:
             pass
         else:
             try:
@@ -561,14 +624,14 @@ class Client(object):
         reference_json = {
             'reference': {
                 'docker': {
-                    'image': dockerReference.docker_image,
-                    'uri': dockerReference.docker_uri,
-                    'credentialsId': dockerReference.docker_credentials,
-                    'port': dockerReference.docker_image_port,
+                    'image': dockerReference.image if dockerReference else None,
+                    'uri': dockerReference.uri if dockerReference else None,
+                    'credentialsId': dockerReference.credentialsId if dockerReference else None,
+                    'port': dockerReference.port if dockerReference else None,
                 },
                 'blob': {
-                    'url': blobReference.blob_storage_link,
-                    'credentialsId': blobReference.blob_credentials,
+                    'url': blobReference.url if blobReference else None,
+                    'credentialsId': blobReference.credentialsId if blobReference else None,
                 },
             },
         }
@@ -582,7 +645,7 @@ class Client(object):
 
     def __process_model(self, model, options: DeployOptions or UpdateOptions,
                         local_repository_path: str, git_service: GitService,
-                        overwrite: bool, contract_path: str) -> ModelType:
+                        overwrite_contract: bool, contract_path: str) -> ModelType:
         logging.info('Saving the model to disk...')
         model_folder = os.path.join(
             local_repository_path, contract_path, 'model')
@@ -592,7 +655,7 @@ class Client(object):
             pytorch_torchserve_handler_name=options.pytorch_torchserve_handler_name)
         model_wrapper.save(model_folder)
         self.__prepare_model_directory(
-            git_service, local_repository_path, contract_path, overwrite)
+            git_service, local_repository_path, contract_path, overwrite_contract)
         blob_storage_link = self.__upload_folder_to_blob(
             local_repository_path, model_folder)
         shutil.rmtree(model_folder)
@@ -602,11 +665,11 @@ class Client(object):
         return model_wrapper.get_model_type()
 
     def __process_explainer(self, explainer, git_service: GitService,
-                            local_repository_path: str, overwrite: bool,
+                            local_repository_path: str, overwrite_contract: bool,
                             contract_path: str) -> ExplainerType:
         logging.info('Saving the explainer to disk...')
         explainer_wrapper = ExplainerWrapper(explainer)
-        self.__prepare_explainer_directory(git_service, contract_path, overwrite)
+        self.__prepare_explainer_directory(git_service, contract_path, overwrite_contract)
         explainer_folder = os.path.join(
             local_repository_path, contract_path, 'explainer')
         explainer_wrapper.save(explainer_folder)

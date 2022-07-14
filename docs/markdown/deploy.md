@@ -3,7 +3,7 @@
 There are multiple routes that can be followed in order to create or update a new deployment. Below a schematic overview is shown of the available scenarios from the Deeploy client.
 
 <p align="left">
-    <img align="left" src="https://deeploy-ml.gitlab.io/deeploy-python-client/img/deeploy-routes.png" width="250px" />
+    <img align="left" src="https://deeploy-ml.gitlab.io/deeploy-python-client/img/deeploy-routes.png" width="400px" />
 </p>
 
 ### Preparation
@@ -70,7 +70,7 @@ model_reference = BlobReference(**{
 deploy_options = DeployOptions(**{
         'name': 'My Deployment Name',
         'description': 'My Deployment Description'
-        'modelBlobConfig': model_reference,
+        'model_blob_config': model_reference,
     })
 
 client.deploy(
@@ -96,7 +96,7 @@ model_reference = DockerReference(**{
 deploy_options = DeployOptions(**{
         'name': 'My Deployment Name',
         'description': 'My Deployment Description'
-        'modelBlobConfig': model_reference,
+        'model_blob_config': model_reference,
     })
 
 client.deploy(
@@ -118,7 +118,7 @@ model_reference = BlobReference(**{
 
 deploy_options = UpdateOptions(**{
         'deployment_id': <DEPLOYMENT_ID_TO_UPDATE>
-        'modelBlobConfig': model_reference,
+        'model_blob_config': model_reference,
     })
 
 client.deploy(
