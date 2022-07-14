@@ -42,8 +42,7 @@ from deeploy import UpdateOptions
 from deeploy.enums import ModelType
 
 update_options = UpdateOptions(**{
-        'name': 'My Deployment Name',
-        'description': 'My Deployment Description'
+        'deployment_id': <DEPLOYMENT_ID_TO_UPDATE>,
     })
 
 # create new deployment
@@ -117,9 +116,8 @@ model_reference = BlobReference(**{
     'url': 's3://deeploy-examples/pytorch/agenet/model'
 })
 
-deploy_options = DeployOptions(**{
-        'name': 'My Deployment Name',
-        'description': 'My Deployment Description'
+deploy_options = UpdateOptions(**{
+        'deployment_id': <DEPLOYMENT_ID_TO_UPDATE>
         'modelBlobConfig': model_reference,
     })
 
@@ -130,35 +128,11 @@ client.deploy(
     local_repository_path='myPath',
     )
 ```
-*Custom docker deployment*
-```
-from deeploy import UpdateOptions, DockerReference
-from deeploy.enums import ModelType
-
-# Create Blob reference
-model_reference = DockerReference(**{
-    'image': 'docker.io/example/image:1.2.3'
-    'uri': '/model:predict'
-    'port': 8000
-})
-
-deploy_options = DeployOptions(**{
-        'name': 'My Deployment Name',
-        'description': 'My Deployment Description'
-        'modelBlobConfig': model_reference,
-    })
-
-client.deploy(
-    options=deploy_options,
-    overwrite=True,
-    model_type=ModelType.CUSTOM.value,
-    local_repository_path='myPath',
-    )
-```
 
 ### Route 3: Deploy in memory model
 When passing a model and/or explainer to the deploy function the client will update the reference.json files in the repository or create new reference.json files if they do not yet exist.
 
+**Deploy**
 ```
 from deeploy import DeployOptions
 from deeploy.enums import ModelType
@@ -175,7 +149,22 @@ client.deploy(
     local_repository_path='myPath',
     model=myPytorchModel)
 ```
+**Update**
+```
+from deeploy import UpdateOptions
+from deeploy.enums import ModelType
 
+deploy_options = DeployOptions(**{
+        'deployment_id': <DEPLOYMENT_ID_TO_UPDATE>
+    })
+
+client.deploy(
+    options=deploy_options,
+    overwrite=True,
+    model_type=ModelType.PYTORCH.value,
+    local_repository_path='myPath',
+    model=myPytorchModel)
+```
 
 ## Creating multiple deployments from a monorepo using the Deeploy contract path (Route 1)
 Deeploy supports creating multiple deployments from the same repository using a contract path. The contract path is the path relative to the root of a repository where the [deeploy contract](https://deeploy-ml.zendesk.com/hc/en-150/articles/4411887195666-Preparing-a-repository) for a deployment is located. The idea is that you create your Deeploy contract path at a subfolder in the repository, as shown in the example below.
