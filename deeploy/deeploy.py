@@ -132,7 +132,20 @@ class Client(object):
             if not os.path.exists(reference_path):
                 raise Exception('Missing model reference file in repository.')
 
-            self.__get_reference_type(reference_path)
+            try:
+                with open(reference_path) as referenceFile:
+                    data = json.load(referenceFile)
+                    if 'reference' in data:
+                        if "blob" in data['reference']:
+                            model_type = model_type
+                        elif "docker" in data['reference']:
+                            model_type = ModelType.CUSTOM.value
+                        else:
+                            raise Exception('No information on to be deployed model available.')
+                    else:
+                        raise Exception('No information on to be deployed model available.')
+            except IOError:
+                raise Exception('Failed to deploy model from reference.json file.')
 
         commit_message = '[Deeploy Client] Add new model' if not commit_message else commit_message
 
@@ -164,7 +177,20 @@ class Client(object):
             reference_path = os.path.join(
                 local_repository_path, contract_path, 'explainer', 'reference.json')
 
-            explainer_type = self.__get_reference_type(reference_path)
+            try:
+                with open(reference_path) as referenceFile:
+                    data = json.load(referenceFile)
+                    if 'reference' in data:
+                        if "blob" in data['reference']:
+                            explainer_type = explainer_type
+                        elif "docker" in data['reference']:
+                            explainer_type = ExplainerType.CUSTOM.value
+                        else:
+                            raise Exception('No information on to be deployed explainer available.')
+                    else:
+                        raise Exception('No information on to be deployed explainer available.')
+            except IOError:
+                explainer_type = ExplainerType.NO_EXPLAINER.value
 
         metadata_path = os.path.join(local_repository_path, contract_path, 'metadata.json')
         self.__prepare_metadata_file(metadata_path, options.feature_labels, options.problem_type,
@@ -200,7 +226,6 @@ class Client(object):
             'explainer_cpu_request': options.explainer_cpu_request,
             'explainer_mem_limit': options.explainer_mem_limit,
             'explainer_mem_request': options.explainer_mem_request,
-            'prediction_method': options.prediction_method,
             'contract_path': contract_path,
             'tags': {'primary': options.custom_id, 'secondary': []},
         }
@@ -368,7 +393,6 @@ class Client(object):
             'explainer_cpu_request': options.explainer_cpu_request,
             'explainer_mem_limit': options.explainer_mem_limit,
             'explainer_mem_request': options.explainer_mem_request,
-            'prediction_method': options.prediction_method,
             'contract_path': contract_path,
         }
 
@@ -680,19 +704,3 @@ class Client(object):
         self.__create_reference_file(explainer_folder, blob_storage_link)
         git_service.add_folder_to_staging(os.path.join(contract_path, 'explainer'))
         return explainer_wrapper
-
-    def __get_reference_type(reference_path: str, type: int) -> int:
-        try:
-            with open(reference_path) as referenceFile:
-                data = json.load(referenceFile)
-                if 'reference' in data:
-                    if "blob" in data['reference']:
-                        return type
-                    elif "docker" in data['reference']:
-                        return ExplainerType.CUSTOM.value
-                    else:
-                        raise Exception('No information on to be deployed explainer available.')
-                else:
-                    raise Exception('No information on to be deployed explainer available.')
-        except IOError:
-            return ExplainerType.NO_EXPLAINER.value

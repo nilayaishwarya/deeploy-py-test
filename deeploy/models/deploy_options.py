@@ -8,9 +8,10 @@ from deeploy.models.model_reference_json import BlobReference, DockerReference
 class DeployOptions(BaseModel):
     """Class that contains the options for deploying a model
     """  # noqa
-
     name: str
     """str: name of the deployment"""  # noqa
+    description: Optional[str]
+    """str, optional: the description of the deployment"""  # noqa
     model_serverless = False
     """bool, optional: whether to deploy the model in a serverless fashion. Defaults to False"""  # noqa
     model_instance_type: Optional[str]
@@ -35,8 +36,6 @@ class DeployOptions(BaseModel):
     """int, optional: RAM limit of model pod, in Megabytes."""  # noqa
     explainer_mem_request: Optional[int]
     """int, optional: RAM request of model pod, in Megabytes."""  # noqa
-    description: Optional[str]
-    """str, optional: the description of the deployment"""  # noqa
     example_input: Optional[List[Any]]
     """List, optional: list of example input parameters for the model"""  # noqa
     example_output: Optional[List[Any]]
@@ -64,7 +63,5 @@ class DeployOptions(BaseModel):
     """DockerReference: docker configuration object of the explainer"""  # noqa
     explainer_blob_config: Optional[BlobReference] = None
     """BlobReference: blob configuration object of the explainer"""  # noqa
-    prediction_method: Optional[int] = None
-    """str: Whether to use predict (0) or predict_proba (1) for SKLearn and XGBoost deployments.""" # noqa
     custom_id: Optional[str] = None
     """str: Name of the custom id"""

@@ -10,12 +10,12 @@ WORKSPACE_ID = 'abc'
 
 def test__init(deeploy_service):
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces')
+        m.get('https://api.test.deeploy.ml/workspaces')
         assert DeeployService(host='test.deeploy.ml', workspace_id='ghi',
                               access_key='abc', secret_key='def')
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces', status_code=401)
+        m.get('https://api.test.deeploy.ml/workspaces', status_code=401)
         with pytest.raises(Exception):
             DeeployService(host='test.deeploy.ml', workspace_id='ghi',
                            access_key='abc', secret_key='def')
@@ -24,7 +24,7 @@ def test__init(deeploy_service):
 @pytest.fixture(scope="session")
 def deeploy_service():
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces')
+        m.get('https://api.test.deeploy.ml/workspaces')
         return DeeployService(host='test.deeploy.ml', workspace_id='ghi', access_key='abc', secret_key='def')
 
 
@@ -77,7 +77,7 @@ def test__get_repositories(deeploy_service):
         ),
     ]
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/repositories' % WORKSPACE_ID,
+        m.get('https://api.test.deeploy.ml/workspaces/%s/repositories' % WORKSPACE_ID,
               json=return_object)
         repositories = deeploy_service.get_repositories(WORKSPACE_ID)
         assert repositories == expected_output
@@ -109,7 +109,7 @@ def test__get_repository(deeploy_service):
         updatedAt='2021-03-17T12:55:10.983Z',
     )
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/repositories/%s' % (WORKSPACE_ID, repository_id),
+        m.get('https://api.test.deeploy.ml/workspaces/%s/repositories/%s' % (WORKSPACE_ID, repository_id),
               json=return_object)
         repositories = deeploy_service.get_repository(WORKSPACE_ID, repository_id)
         assert repositories == expected_output
@@ -124,7 +124,7 @@ def test__create_deployment(deeploy_service):
         'kfServingId': "x63921818-f908-44d6-af72-17e9beef7b6c",
         'name': "client test",
         'ownerId': "9f39d8b4-b661-43ef-a81f-e8f8dded8c5a",
-        'publicURL': "https://api.ute.deeploy.ml/v2/workspaces/e7942eeb-3e7e-4d27-a413-23f49a0f24f3/deployments/63921818-f908-44d6-af72-17e9beef7b6c/predict",
+        'publicURL': "https://api.ute.deeploy.ml/workspaces/e7942eeb-3e7e-4d27-a413-23f49a0f24f3/deployments/63921818-f908-44d6-af72-17e9beef7b6c/predict",
         'status': 1,
         'updatedAt': "2021-03-17T14:59:35.203Z",
         'workspaceId': WORKSPACE_ID,
@@ -138,14 +138,14 @@ def test__create_deployment(deeploy_service):
         'kfServingId': "x63921818-f908-44d6-af72-17e9beef7b6c",
         'name': "client test",
         'ownerId': "9f39d8b4-b661-43ef-a81f-e8f8dded8c5a",
-        'publicURL': "https://api.ute.deeploy.ml/v2/workspaces/e7942eeb-3e7e-4d27-a413-23f49a0f24f3/deployments/63921818-f908-44d6-af72-17e9beef7b6c/predict",
+        'publicURL': "https://api.ute.deeploy.ml/workspaces/e7942eeb-3e7e-4d27-a413-23f49a0f24f3/deployments/63921818-f908-44d6-af72-17e9beef7b6c/predict",
         'status': 1,
         'updatedAt': "2021-03-17T14:59:35.203Z",
         'workspaceId': WORKSPACE_ID,
     }
     )
     with requests_mock.Mocker() as m:
-        m.post('https://api.test.deeploy.ml/v2/workspaces/%s/deployments' % WORKSPACE_ID,
+        m.post('https://api.test.deeploy.ml/workspaces/%s/deployments' % WORKSPACE_ID,
                json=return_object)
         deployment = deeploy_service.create_deployment(WORKSPACE_ID, CreateDeployment(**{
             'name': "client test",
@@ -200,14 +200,14 @@ def test_predict(deeploy_service):
         })
 
     with requests_mock.Mocker() as m:
-        m.post('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/predict' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
+        m.post('https://api.test.deeploy.ml/workspaces/%s/deployments/%s/predict' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
                json=return_object_V1)
         prediction = deeploy_service.predict(
             workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body)
         assert prediction == expected_output_V1
 
     with requests_mock.Mocker() as m:
-        m.post('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/predict' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
+        m.post('https://api.test.deeploy.ml/workspaces/%s/deployments/%s/predict' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
                status_code=400)
         with pytest.raises(Exception):
             deeploy_service.predict(
@@ -230,13 +230,13 @@ def test_explain(deeploy_service):
     }
 
     with requests_mock.Mocker() as m:
-        m.post('/v2/workspaces/%s/deployments/%s/explain' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
+        m.post('/workspaces/%s/deployments/%s/explain' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
                json=request_body)
         assert deeploy_service.explain(
             workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_body=request_body, image=True)
 
     with requests_mock.Mocker() as m:
-        m.post('/v2/workspaces/%s/deployments/%s/explain' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
+        m.post('/workspaces/%s/deployments/%s/explain' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
                status_code=400)
         with pytest.raises(Exception):
             deeploy_service.explain(
@@ -272,14 +272,14 @@ def test_getRequestLogs(deeploy_service):
             "count": 1})
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
+        m.get('https://api.test.deeploy.ml/workspaces/%s/deployments/%s/requestLogs' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
               json=return_object)
         logs = deeploy_service.getRequestLogs(workspace_id=WORKSPACE_ID,
                                               deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4')
         assert logs == expected_output
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
+        m.get('https://api.test.deeploy.ml/workspaces/%s/deployments/%s/requestLogs' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4'),
               status_code=400)
         with pytest.raises(Exception):
             deeploy_service.getRequestLogs(workspace_id=WORKSPACE_ID,
@@ -293,10 +293,9 @@ def test_getOnePredictionLog(deeploy_service):
         "requestBodyBlobLink": '',
         "responseBody": {},
         "requestLog": {},
-        "predictionValidation": {},
+        "evaluation": {},
         "actual": {},
         "createdAt": "2021-05-06T15:36:07.597Z",
-        "predictionValidation": {},
         "tags": {'primary': None, 'secondary': []}
     }
 
@@ -306,20 +305,20 @@ def test_getOnePredictionLog(deeploy_service):
             "requestBodyBlobLink": '',
             "responseBody": {},
             "requestLog": {},
-            "predictionValidation": {},
+            "evaluation": {},
             "actual": {},
             "createdAt": "2021-05-06T15:36:07.597Z",
             "tags": {'primary': None, 'secondary': []}})
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
+        m.get('https://api.test.deeploy.ml/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
               json=return_object)
         log = deeploy_service.getOnePredictionLog(
             workspace_id=WORKSPACE_ID, deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_log_id='abc', prediction_log_id='abc')
         assert log == expected_output
 
     with requests_mock.Mocker() as m:
-        m.get('https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
+        m.get('https://api.test.deeploy.ml/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
               status_code=400)
         with pytest.raises(Exception):
             deeploy_service.getOnePredictionLog(
@@ -328,8 +327,8 @@ def test_getOnePredictionLog(deeploy_service):
 
 def test_evaluate(deeploy_service: DeeployService):
     with requests_mock.Mocker() as m:
-        m.post("https://api.test.deeploy.ml/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s/validations" % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
+        m.post("https://api.test.deeploy.ml/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s/evaluations" % (WORKSPACE_ID, '20c2593d-e09d-4246-be84-46f81a40a7d4', 'abc', 'abc'),
                status_code=401)
         with pytest.raises(Exception):
             deeploy_service.evaluate(
-                workspace_id='abc', deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_log_id='abc', prediction_log_id='abc', validation_input={})
+                workspace_id='abc', deployment_id='20c2593d-e09d-4246-be84-46f81a40a7d4', request_log_id='abc', prediction_log_id='abc', evaluation_input={})
