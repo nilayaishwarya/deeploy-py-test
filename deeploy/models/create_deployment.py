@@ -33,7 +33,6 @@ class CreateDeployment(BaseModel):
     explainer_cpu_request:  Optional[float]
     explainer_mem_limit: Optional[int]
     explainer_mem_request: Optional[int]
-    prediction_method: Optional[Any] = None
 
     def to_request_body(self):
         return {
@@ -59,5 +58,4 @@ class CreateDeployment(BaseModel):
             'branchName': self.branch_name,
             'commit': self.commit,
             'contractPath': self.contract_path,
-            'predictionMethod': self.prediction_method
         }

@@ -21,7 +21,7 @@ class PredictionLog(BaseModel):
     requestBodyBlobLink: Optional[str]
     responseBody: Dict
     requestLog: Dict
-    predictionValidation: Optional[Dict]
+    evaluation: Optional[Dict]
     actual: Optional[Dict]
     createdAt: str
     tags: Dict

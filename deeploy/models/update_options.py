@@ -57,8 +57,6 @@ class UpdateOptions(BaseModel):
         ['image_classifier', 'image_segmenter', 'object_detector', 'text_classifier'].
         See the [TorchServe documentation](https://github.com/pytorch/serve/blob/master/docs/default_handlers.md#torchserve-default-inference-handlers)
         for more info."""  # noqa
-    prediction_method: Optional[int] = None
-    """str: Whether to use predict (0) or predict_proba (1) for SKLearn and XGBoost deployments.""" # noqa
     model_docker_config: Optional[DockerReference] = None
     """DockerReference: docker configuration object of the model"""  # noqa
     model_blob_config: Optional[BlobReference] = None
@@ -67,5 +65,3 @@ class UpdateOptions(BaseModel):
     """DockerReference: docker configuration object of the explainer"""  # noqa
     explainer_blob_config: Optional[BlobReference] = None
     """BlobReference: blob configuration object of the explainer"""  # noqa
-    prediction_method: Optional[int] = None
-    """str: Whether to use predict (0) or predict_proba (1) for SKLearn and XGBoost deployments.""" # noqa

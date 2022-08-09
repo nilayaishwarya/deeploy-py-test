@@ -14,7 +14,7 @@ class Deployment(BaseModel):
     example_output: Optional[List[Any]]
     status: int
     owner_id: str
-    kf_serving_id: Optional[str]
+    kserve_id: Optional[str]
     public_url: Optional[str]
     id: str
     created_at: str

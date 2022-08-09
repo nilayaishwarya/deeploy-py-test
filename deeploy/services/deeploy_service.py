@@ -32,7 +32,7 @@ class DeeployService(object):
         return
 
     def get_repositories(self, workspace_id: str) -> List[Repository]:
-        url = '%s/v2/workspaces/%s/repositories' % (
+        url = '%s/workspaces/%s/repositories' % (
             self.__host, workspace_id)
         params = {
             'isArchived': False,
@@ -47,7 +47,7 @@ class DeeployService(object):
         return repositories
 
     def get_repository(self, workspace_id: str, repository_id: str) -> Repository:
-        url = '%s/v2/workspaces/%s/repositories/%s' % (
+        url = '%s/workspaces/%s/repositories/%s' % (
             self.__host, workspace_id, repository_id)
 
         repository_response = requests.get(
@@ -62,7 +62,7 @@ class DeeployService(object):
     def get_deployment(
             self, workspace_id: str, deployment_id: str,
             withExamples: bool = False) -> Deployment:
-        url = '%s/v2/workspaces/%s/deployments/%s' % (self.__host, workspace_id, deployment_id)
+        url = '%s/workspaces/%s/deployments/%s' % (self.__host, workspace_id, deployment_id)
         params = {
             'withExamples': withExamples,
         }
@@ -78,7 +78,7 @@ class DeeployService(object):
         return deployment
 
     def create_deployment(self, workspace_id: str, deployment: CreateDeployment) -> Deployment:
-        url = '%s/v2/workspaces/%s/deployments' % (self.__host, workspace_id)
+        url = '%s/workspaces/%s/deployments' % (self.__host, workspace_id)
         data = deployment.to_request_body()
 
         deployment_response = requests.post(
@@ -92,9 +92,9 @@ class DeeployService(object):
         return deployment
 
     def update_deployment(self, workspace_id: str, update: UpdateDeployment) -> Deployment:
-        url = '%s/v2/workspaces/%s/deployments/%s' % (self.__host,
-                                                      workspace_id,
-                                                      update.deployment_id)
+        url = '%s/workspaces/%s/deployments/%s' % (self.__host,
+                                                   workspace_id,
+                                                   update.deployment_id)
         data = update.to_request_body()
 
         deployment_response = requests.patch(
@@ -109,9 +109,9 @@ class DeeployService(object):
 
     def update_deployment_metadata(self, workspace_id: str,
                                    update: UpdateDeploymentMetadata) -> Deployment:
-        url = '%s/v2/workspaces/%s/deployments/%s/metadata' % (self.__host,
-                                                               workspace_id,
-                                                               update.deployment_id)
+        url = '%s/workspaces/%s/deployments/%s/metadata' % (self.__host,
+                                                            workspace_id,
+                                                            update.deployment_id)
         data = update.to_request_body()
 
         deployment_response = requests.patch(
@@ -125,7 +125,7 @@ class DeeployService(object):
         return deployment
 
     def get_workspace(self, workspace_id: str) -> Workspace:
-        url = '%s/v2/workspaces/%s' % (self.__host, workspace_id)
+        url = '%s/workspaces/%s' % (self.__host, workspace_id)
 
         workspace_response = requests.get(
             url, auth=(self.__access_key, self.__secret_key))
@@ -139,7 +139,7 @@ class DeeployService(object):
     def upload_blob_file(
             self, local_file_path: str, relative_folder_path: str, workspace_id: str,
             repository_id: str, uuid: str) -> str:
-        url = '%s/v2/workspaces/%s/repositories/%s/upload' % (
+        url = '%s/workspaces/%s/repositories/%s/upload' % (
             self.__host, workspace_id, repository_id)
         params = {
             'commitSha': uuid,
@@ -154,7 +154,7 @@ class DeeployService(object):
 
     def predict(self, workspace_id: str, deployment_id: str,
                 request_body: dict) -> V1Prediction or V2Prediction:
-        url = '%s/v2/workspaces/%s/deployments/%s/predict' % (
+        url = '%s/workspaces/%s/deployments/%s/predict' % (
             self.__host, workspace_id, deployment_id)
 
         prediction_response = requests.post(
@@ -167,7 +167,7 @@ class DeeployService(object):
 
     def explain(self, workspace_id: str, deployment_id: str, request_body: dict,
                 image: bool = False) -> object:
-        url = '%s/v2/workspaces/%s/deployments/%s/explain' % (
+        url = '%s/workspaces/%s/deployments/%s/explain' % (
             self.__host, workspace_id, deployment_id)
         params = {
             'image': str(image).lower(),
@@ -183,7 +183,7 @@ class DeeployService(object):
 
     def getOnePredictionLog(self, workspace_id: str, deployment_id: str, request_log_id: str,
                             prediction_log_id: str) -> PredictionLog:
-        url = '%s/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (
+        url = '%s/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s' % (
             self.__host, workspace_id, deployment_id, request_log_id, prediction_log_id)
 
         log_response = requests.get(
@@ -196,9 +196,9 @@ class DeeployService(object):
         return log
 
     def getPredictionLogs(self, workspace_id: str, deployment_id: str) -> PredictionLogs:
-        url = '%s/v2/workspaces/%s/deployments/%s/predictionLogs' % (self.__host,
-                                                                     workspace_id,
-                                                                     deployment_id)
+        url = '%s/workspaces/%s/deployments/%s/predictionLogs' % (self.__host,
+                                                                  workspace_id,
+                                                                  deployment_id)
 
         logs_response = requests.get(
             url, headers=self.__get_auth_header(AuthType.ALL))
@@ -209,9 +209,9 @@ class DeeployService(object):
         return logs
 
     def getRequestLogs(self, workspace_id: str, deployment_id: str) -> RequestLogs:
-        url = '%s/v2/workspaces/%s/deployments/%s/requestLogs' % (self.__host,
-                                                                  workspace_id,
-                                                                  deployment_id)
+        url = '%s/workspaces/%s/deployments/%s/requestLogs' % (self.__host,
+                                                               workspace_id,
+                                                               deployment_id)
 
         logs_response = requests.get(
             url, headers=self.__get_auth_header(AuthType.ALL))
@@ -223,11 +223,11 @@ class DeeployService(object):
 
     def evaluate(self, workspace_id: str, deployment_id: str, request_log_id: str, prediction_log_id: str,
                  evaluation_input: dict) -> None:
-        url = "%s/v2/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s/validations" % (
+        url = "%s/workspaces/%s/deployments/%s/requestLogs/%s/predictionLogs/%s/evaluations" % (
             self.__host, workspace_id, deployment_id, request_log_id, prediction_log_id)
 
         if ((evaluation_input['result'] == 0) and ('value' in evaluation_input)):
-            raise Exception('An overrule value can not be provided when confirming the inference.')
+            raise Exception('An evaluation value can not be provided when confirming the inference.')
 
         evaluation_response = requests.post(
             url, json=evaluation_input,
@@ -241,7 +241,7 @@ class DeeployService(object):
                 raise Exception('Failed to request evaluation.')
 
     def actuals(self, workspace_id: str, deployment_id: str, actuals_input: dict) -> None:
-        url = "%s/v2/workspaces/%s/deployments/%s/actuals" % (
+        url = "%s/workspaces/%s/deployments/%s/actuals" % (
             self.__host, workspace_id, deployment_id)
 
         actuals_response = requests.put(
@@ -254,7 +254,7 @@ class DeeployService(object):
                 raise Exception('Failed to submit actuals.')
 
     def __keys_are_valid(self) -> bool:
-        host_for_testing = '%s/v2/workspaces' % self.__host
+        host_for_testing = '%s/workspaces' % self.__host
 
         workspaces_response = requests.get(
             host_for_testing, auth=(self.__access_key, self.__secret_key))
@@ -263,7 +263,7 @@ class DeeployService(object):
         return False
 
     def __token_is_valid(self, workspace_id, deployment_id) -> bool:
-        host_for_testing = '%s/v2/workspaces/%s/deployments/%s/requestLogs' % (
+        host_for_testing = '%s/workspaces/%s/deployments/%s/requestLogs' % (
             self.__host, workspace_id, deployment_id)
         headers = {'Authorization': 'Bearer ' + self.__token}
         logs_response = requests.get(
